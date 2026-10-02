@@ -1,0 +1,20 @@
+[
+  ["GET", "/health", 200],
+  ["GET", "/auth/me", 200],
+  ["POST", "/auth/register", 201],
+  ["POST", "/auth/login", 200],
+  ["POST", "/auth/logout", 200],
+  ["GET", "/chats", 200],
+  ["POST", "/chats", 201],
+  ["GET", "/chats/demo_001", 200],
+  ["PATCH", "/chats/demo_001", 200],
+  ["DELETE", "/chats/demo_001", 204],
+  ["GET", "/documents", 200],
+  ["POST", "/documents", 201],
+  ["GET", "/documents/demo_001", 200],
+  ["PATCH", "/documents/demo_001", 200],
+  ["DELETE", "/documents/demo_001", 204],
+  ["POST", "/query", 201],
+  ["GET", "/nonexistent", 404],
+  ["GET", "/test-error", 500]
+]

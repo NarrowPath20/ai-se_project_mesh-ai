@@ -1,0 +1,29 @@
+name: MeshAI scaffold checks
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - name: Run Postman collection
+        run: |
+          npm start > /tmp/mesh-ai-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID"' EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://localhost:3000/health; then break; fi
+            sleep 1
+          done
+          npx --yes newman run postman/mesh-ai.postman_collection.json

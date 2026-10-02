@@ -1,0 +1,43 @@
+{
+  "name": "ai-se_project_mesh-ai",
+  "version": "1.0.0",
+  "description": "MeshAI Part 1: stubbed TypeScript Express API",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "nodemon --watch src --ext ts --exec tsx src/index.ts",
+    "lint": "eslint src/",
+    "test": "npm run build && node --test tests/api.test.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NarrowPath20/ai-se_project_mesh-ai.git"
+  },
+  "keywords": [],
+  "author": "Dustin Bates",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/NarrowPath20/ai-se_project_mesh-ai/issues"
+  },
+  "homepage": "https://github.com/NarrowPath20/ai-se_project_mesh-ai#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.4",
+    "eslint": "^10.11.0",
+    "eslint-config-prettier": "^10.1.8",
+    "nodemon": "^3.1.14",
+    "prettier": "^3.9.9",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.0"
+  },
+  "part": "1"
+}

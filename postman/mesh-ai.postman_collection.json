@@ -1,0 +1,599 @@
+{
+  "info": {
+    "name": "mesh-ai",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Local scaffold checks. Route map is provisional until the course endpoint reference is supplied."
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    }
+  ],
+  "item": [
+    {
+      "name": "health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(200));",
+                  "pm.test('Response envelope', () => { const body = pm.response.json(); pm.expect(body.success).to.eql(true); pm.expect(body).to.have.all.keys('success', 'data', 'error'); pm.expect(body.error).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "GET /auth/me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(200));",
+                  "pm.test('Response envelope', () => { const body = pm.response.json(); pm.expect(body.success).to.eql(true); pm.expect(body).to.have.all.keys('success', 'data', 'error'); pm.expect(body.error).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(201));",
+                  "pm.test('Response envelope', () => { const body = pm.response.json(); pm.expect(body.success).to.eql(true); pm.expect(body).to.have.all.keys('success', 'data', 'error'); pm.expect(body.error).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(200));",
+                  "pm.test('Response envelope', () => { const body = pm.response.json(); pm.expect(body.success).to.eql(true); pm.expect(body).to.have.all.keys('success', 'data', 'error'); pm.expect(body.error).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /auth/logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(200));",
+                  "pm.test('Response envelope', () => { const body = pm.response.json(); pm.expect(body.success).to.eql(true); pm.expect(body).to.have.all.keys('success', 'data', 'error'); pm.expect(body.error).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "chats",
+      "item": [
+        {
+          "name": "GET /chats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/chats",
+              "host": ["{{base_url}}"],
+              "path": ["chats"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(200));",
+                  "pm.test('Response envelope', () => { const body = pm.response.json(); pm.expect(body.success).to.eql(true); pm.expect(body).to.have.all.keys('success', 'data', 'error'); pm.expect(body.error).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /chats",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/chats",
+              "host": ["{{base_url}}"],
+              "path": ["chats"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(201));",
+                  "pm.test('Response envelope', () => { const body = pm.response.json(); pm.expect(body.success).to.eql(true); pm.expect(body).to.have.all.keys('success', 'data', 'error'); pm.expect(body.error).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /chats/demo_001",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/chats/demo_001",
+              "host": ["{{base_url}}"],
+              "path": ["chats", "demo_001"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(200));",
+                  "pm.test('Response envelope', () => { const body = pm.response.json(); pm.expect(body.success).to.eql(true); pm.expect(body).to.have.all.keys('success', 'data', 'error'); pm.expect(body.error).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /chats/demo_001",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/chats/demo_001",
+              "host": ["{{base_url}}"],
+              "path": ["chats", "demo_001"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(200));",
+                  "pm.test('Response envelope', () => { const body = pm.response.json(); pm.expect(body.success).to.eql(true); pm.expect(body).to.have.all.keys('success', 'data', 'error'); pm.expect(body.error).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /chats/demo_001",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/chats/demo_001",
+              "host": ["{{base_url}}"],
+              "path": ["chats", "demo_001"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(204));",
+                  "pm.test('No content', () => pm.expect(pm.response.text()).to.eql(''));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "documents",
+      "item": [
+        {
+          "name": "GET /documents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/documents",
+              "host": ["{{base_url}}"],
+              "path": ["documents"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(200));",
+                  "pm.test('Response envelope', () => { const body = pm.response.json(); pm.expect(body.success).to.eql(true); pm.expect(body).to.have.all.keys('success', 'data', 'error'); pm.expect(body.error).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /documents",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/documents",
+              "host": ["{{base_url}}"],
+              "path": ["documents"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(201));",
+                  "pm.test('Response envelope', () => { const body = pm.response.json(); pm.expect(body.success).to.eql(true); pm.expect(body).to.have.all.keys('success', 'data', 'error'); pm.expect(body.error).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /documents/demo_001",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/documents/demo_001",
+              "host": ["{{base_url}}"],
+              "path": ["documents", "demo_001"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(200));",
+                  "pm.test('Response envelope', () => { const body = pm.response.json(); pm.expect(body.success).to.eql(true); pm.expect(body).to.have.all.keys('success', 'data', 'error'); pm.expect(body.error).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /documents/demo_001",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/documents/demo_001",
+              "host": ["{{base_url}}"],
+              "path": ["documents", "demo_001"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(200));",
+                  "pm.test('Response envelope', () => { const body = pm.response.json(); pm.expect(body.success).to.eql(true); pm.expect(body).to.have.all.keys('success', 'data', 'error'); pm.expect(body.error).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /documents/demo_001",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/documents/demo_001",
+              "host": ["{{base_url}}"],
+              "path": ["documents", "demo_001"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(204));",
+                  "pm.test('No content', () => pm.expect(pm.response.text()).to.eql(''));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "query",
+      "item": [
+        {
+          "name": "POST /query",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/query",
+              "host": ["{{base_url}}"],
+              "path": ["query"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(201));",
+                  "pm.test('Response envelope', () => { const body = pm.response.json(); pm.expect(body.success).to.eql(true); pm.expect(body).to.have.all.keys('success', 'data', 'error'); pm.expect(body.error).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "errors",
+      "item": [
+        {
+          "name": "GET /nonexistent",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/nonexistent",
+              "host": ["{{base_url}}"],
+              "path": ["nonexistent"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(404));",
+                  "pm.test('Response envelope', () => { const body = pm.response.json(); pm.expect(body.success).to.eql(false); pm.expect(body).to.have.all.keys('success', 'data', 'error'); pm.expect(body.data).to.eql(null); pm.expect(body.error).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /test-error",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/test-error",
+              "host": ["{{base_url}}"],
+              "path": ["test-error"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expected status', () => pm.response.to.have.status(500));",
+                  "pm.test('Response envelope', () => { const body = pm.response.json(); pm.expect(body.success).to.eql(false); pm.expect(body).to.have.all.keys('success', 'data', 'error'); pm.expect(body.data).to.eql(null); pm.expect(body.error).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
