@@ -1,7 +1,7 @@
 {
   "name": "ai-se_project_mesh-ai",
   "version": "1.0.0",
-  "description": "MeshAI Part 1: stubbed TypeScript Express API",
+  "description": "MeshAI MongoDB API with authentication and PDF RAG",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -25,11 +25,21 @@
   },
   "homepage": "https://github.com/NarrowPath20/ai-se_project_mesh-ai#readme",
   "dependencies": {
-    "express": "^5.2.1"
+    "bcrypt": "^6.0.0",
+    "dotenv": "^18.0.8",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.11.2",
+    "multer": "^2.4.0",
+    "openai": "^6.49.0",
+    "pdf-parse": "^2.4.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.3.0",
     "@types/node": "^26.6.4",
     "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.1.8",
@@ -39,5 +49,5 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.0"
   },
-  "part": "1"
+  "part": "2"
 }

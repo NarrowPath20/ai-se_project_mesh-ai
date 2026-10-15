@@ -1,4 +1,4 @@
-name: MeshAI scaffold checks
+name: MeshAI Part 2 checks
 
 on:
   push:
@@ -8,6 +8,19 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:8
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      MONGO_URI: mongodb://127.0.0.1:27017/meshai_ci
+      JWT_SECRET: ci-only-secret-not-for-production
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,7 +30,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
-      - name: Run Postman collection
+      - name: Run Postman core collection
         run: |
           npm start > /tmp/mesh-ai-server.log 2>&1 &
           SERVER_PID=$!
@@ -26,4 +39,4 @@ jobs:
             if curl --fail --silent http://localhost:3000/health; then break; fi
             sleep 1
           done
-          npx --yes newman run postman/mesh-ai.postman_collection.json
+          npx --yes newman run postman/mesh-ai.postman_collection.json --folder Core

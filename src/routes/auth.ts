@@ -1,3 +1,4 @@
+import { auth } from '../middleware/auth.js';
 import { Router } from 'express';
 import {
   getCurrentUser,
@@ -8,7 +9,7 @@ import {
 
 export const authRouter = Router();
 
-authRouter.get('/me', getCurrentUser);
+authRouter.get('/me', auth, getCurrentUser);
 authRouter.post('/register', register);
 authRouter.post('/login', login);
-authRouter.post('/logout', logout);
+authRouter.post('/logout', auth, logout);
