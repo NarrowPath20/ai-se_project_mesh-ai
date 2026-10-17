@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
 import { HttpError, requiredText } from '../utils/http-error.js';
 const publicUser = (user: { _id: unknown; email: string; name: string }) => ({
-  _id: user._id,
+  userId: user._id,
   email: user.email,
   name: user.name,
 });
@@ -19,9 +19,7 @@ export const register: RequestHandler = async (req, res): Promise<void> => {
     password: await bcrypt.hash(password, 10),
     name,
   });
-  res
-    .status(201)
-    .json({ success: true, data: { user: publicUser(user) }, error: null });
+  res.status(201).json({ success: true, data: publicUser(user), error: null });
 };
 export const login: RequestHandler = async (req, res): Promise<void> => {
   const { email, password } = req.body ?? {};
@@ -48,9 +46,10 @@ export const getCurrentUser: RequestHandler = async (
   res,
 ): Promise<void> => {
   const user = await User.findById(req.user!.userId);
-  if (!user) throw new HttpError(401, 'Unauthorized');
+  if (!user)
+    throw new HttpError(
+      401,
+      'The authenticated user no longer exists. Please sign in again.',
+    );
   res.json({ success: true, data: publicUser(user), error: null });
-};
-export const logout: RequestHandler = (_req, res): void => {
-  res.json({ success: true, data: {}, error: null });
 };

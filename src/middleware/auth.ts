@@ -1,10 +1,19 @@
 import type { RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
-export const auth: RequestHandler = (req, res, next): void => {
+import { HttpError } from '../utils/http-error.js';
+export const auth: RequestHandler = (req, _res, next): void => {
+  const header = req.get('Authorization');
+  if (!header?.startsWith('Bearer ') || !header.slice(7).trim()) {
+    next(
+      new HttpError(
+        401,
+        'An authorization token is required. Use Authorization: Bearer <token>.',
+      ),
+    );
+    return;
+  }
   try {
-    const header = req.get('Authorization');
-    if (!header?.startsWith('Bearer ')) throw new Error('Missing token');
     const payload = jwt.verify(header.slice(7), process.env.JWT_SECRET!);
     if (
       typeof payload === 'string' ||
@@ -15,8 +24,6 @@ export const auth: RequestHandler = (req, res, next): void => {
     req.user = { userId: payload.userId };
     next();
   } catch {
-    res
-      .status(401)
-      .json({ success: false, data: null, error: { message: 'Unauthorized' } });
+    next(new HttpError(401, 'Invalid token'));
   }
 };

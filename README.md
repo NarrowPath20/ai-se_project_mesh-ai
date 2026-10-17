@@ -19,7 +19,8 @@ contains a generated JWT secret. Configure the Nebius key locally.
 ## API
 
 All responses use `{ success, data, error }`; errors contain `{ message }`.
-Login and registration return `data.user`; login also returns `data.token`.
+Registration and `/auth/me` return the user directly in `data`, with `userId`, `email`, and `name`.
+Login returns `data.user` with the same fields and `data.token`.
 Other resource responses use MongoDB `_id` fields. Supply the JWT as
 `Authorization: Bearer <token>` for all chat, document, query, and current-user routes.
 
@@ -29,7 +30,6 @@ Other resource responses use MongoDB `_id` fields. Supply the JWT as
 | POST   | /auth/register      | email, password (8+ characters), name; 201             |
 | POST   | /auth/login         | email, password; token and user                        |
 | GET    | /auth/me            | Current user                                           |
-| POST   | /auth/logout        | Client should discard its JWT                          |
 | POST   | /chats              | title; 201                                             |
 | GET    | /chats              | Current user's chats                                   |
 | GET    | /chats/:id          | { chat, messages } in chronological order              |

@@ -92,6 +92,10 @@ const pdf = () => {
 };
 test('MongoDB auth, ownership, PDF extraction, retrieval, generation, and persisted messages', async () => {
   assert.equal((await request('GET', '/health')).status, 200);
+  assert.equal((await request('GET', '/test-error')).status, 404);
+  const unauthenticated = await request('GET', '/auth/me');
+  assert.equal(unauthenticated.status, 401);
+  assert.match(unauthenticated.error.message, /Authorization: Bearer/);
   assert.equal(
     (
       await request('POST', '/auth/register', {
@@ -108,8 +112,12 @@ test('MongoDB auth, ownership, PDF extraction, retrieval, generation, and persis
     name: 'Test',
   });
   assert.equal(registration.status, 201);
-  assert.equal(registration.body.user.password, undefined);
-  const storedUser = await User.findById(registration.body.user._id).select(
+  assert.deepEqual(Object.keys(registration.body).sort(), [
+    'email',
+    'name',
+    'userId',
+  ]);
+  const storedUser = await User.findById(registration.body.userId).select(
     '+password',
   );
   assert.notEqual(storedUser.password, 'password123');
@@ -139,6 +147,18 @@ test('MongoDB auth, ownership, PDF extraction, retrieval, generation, and persis
     password: 'password123',
   });
   const token = login.body.token;
+  const currentUser = await request('GET', '/auth/me', undefined, token);
+  assert.equal(currentUser.status, 200);
+  assert.deepEqual(login.body.user, registration.body);
+  assert.equal(
+    (await request('POST', '/auth/logout', undefined, token)).status,
+    404,
+  );
+  assert.equal(
+    (await request('GET', '/chats', undefined, 'invalid')).error.message,
+    'Invalid token',
+  );
+  assert.deepEqual(currentUser.body, registration.body);
   assert.equal(
     jwt.verify(token, process.env.JWT_SECRET).userId,
     String(storedUser._id),

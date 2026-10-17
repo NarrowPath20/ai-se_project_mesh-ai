@@ -12,10 +12,6 @@ app.get('/health', (_req, res): void => {
   res.status(200).json({ success: true, data: { status: 'ok' }, error: null });
 });
 
-app.get('/test-error', (): void => {
-  throw new Error('Test error');
-});
-
 app.use(router);
 app.use(notFoundHandler);
 app.use(errorHandler);

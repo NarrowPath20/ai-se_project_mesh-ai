@@ -29,13 +29,20 @@ export const errorHandler: ErrorRequestHandler = (
     message = 'Invalid JSON request body';
   } else if (error instanceof mongoose.Error.CastError) {
     status = 400;
-    message = 'Invalid resource ID';
+    message = `Invalid ${error.path}: expected a valid ${error.kind}.`;
   } else if (error instanceof mongoose.Error.ValidationError) {
     status = 400;
-    message = 'Invalid resource data';
+    message = Object.values(error.errors)
+      .map((validationError) => validationError.message)
+      .join('; ');
   } else if (error instanceof multer.MulterError) {
     status = error.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
-    message = error.message;
+    message =
+      error.code === 'LIMIT_FILE_SIZE'
+        ? 'The PDF file exceeds the 20 MiB upload limit.'
+        : error.code === 'LIMIT_UNEXPECTED_FILE'
+          ? 'Upload one PDF using the multipart field named file.'
+          : error.message;
   } else if (
     typeof error === 'object' &&
     error !== null &&
@@ -43,7 +50,7 @@ export const errorHandler: ErrorRequestHandler = (
     error.code === 11000
   ) {
     status = 409;
-    message = 'User already exists';
+    message = 'Email is already in use';
   }
   if (status === 500) console.error(error);
   res.status(status).json({ success: false, data: null, error: { message } });
