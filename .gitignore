@@ -41,3 +41,4 @@ logs/
 *.iml
 
 uploads/
+.vite/

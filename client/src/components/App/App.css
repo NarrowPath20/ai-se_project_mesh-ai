@@ -1,0 +1,11 @@
+.app {
+  min-height: 100svh;
+  padding: 72px 24px;
+  color: #1d1d1f;
+  background-color: #fff;
+  font-family: "Work Sans", Arial, Helvetica, sans-serif;
+}
+
+@media (max-width: 600px) {
+  .app { padding: 40px 20px; }
+}
