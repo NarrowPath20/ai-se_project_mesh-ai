@@ -1,0 +1,220 @@
+import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
+
+test.beforeEach(async ({ page }) => {
+  // External font availability should not affect local application checks.
+  await page.route('https://fonts.googleapis.com/**', (route) => route.fulfill({ body: '', contentType: 'text/css' }));
+});
+
+async function changeStub(page: Page, name: string, injectedCode: string) {
+  await page.route('**/src/utils/api.ts', async (route) => {
+    const response = await route.fetch();
+    const body = await response.text();
+    const pattern = new RegExp(`(${name} = async \\([^)]*\\) => \\{)`);
+    expect(body).toMatch(pattern);
+    await route.fulfill({ response, body: body.replace(pattern, `$1\n${injectedCode}`) });
+  });
+}
+
+test('routes, refresh, Start, active links and favicon', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => { if (['error', 'warning'].includes(message.type())) errors.push(message.text()); });
+  await page.goto('/');
+  await expect(page.locator('header')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Welcome to MeshAI' })).toBeVisible();
+  await page.getByRole('button', { name: 'Start', exact: true }).click();
+  await expect(page).toHaveURL(/\/knowledge$/);
+  for (const path of ['/knowledge', '/chat', '/']) {
+    await page.goto(path);
+    await page.reload();
+    await expect(page).toHaveURL(new RegExp(`${path === '/' ? '/$' : path + '$'}`));
+    await expect(page.locator('header')).toHaveCount(path === '/' ? 0 : 1);
+    if (path !== '/') await expect(page.locator('.header__link_active')).toHaveAttribute('href', path);
+  }
+  const favicon = await page.request.get('/favicon.png');
+  expect(favicon.status()).toBe(200);
+  expect(favicon.headers()['content-type']).toContain('image/png');
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', '/favicon.png');
+  expect(errors).toEqual([]);
+});
+
+test('documents load, file selection and dropping PDFs update the list', async ({ page }) => {
+  await page.goto('/knowledge');
+  await expect(page.getByRole('status')).toContainText('Loading documents');
+  await page.locator('input[type=file]').setInputFiles({ name: 'early.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') });
+  await expect(page.getByText('early.pdf', { exact: true })).toBeVisible();
+  await expect(page.getByText('code-review-guidelines.pdf', { exact: true })).toBeVisible();
+  await page.locator('.upload-area__zone').evaluate((element) => {
+    const data = new DataTransfer();
+    data.items.add(new File(['%PDF-1.4'], 'dropped.pdf', { type: 'application/pdf' }));
+    element.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer: data }));
+  });
+  await expect(page.getByText('dropped.pdf', { exact: true })).toBeVisible();
+});
+
+test('documents empty state', async ({ page }) => {
+  await changeStub(page, 'getDocuments', 'return { success: true, data: [], error: null };');
+  await page.goto('/knowledge');
+  await expect(page.getByText('No documents yet.', { exact: true })).toBeVisible();
+});
+
+test('documents error state', async ({ page }) => {
+  await changeStub(page, 'getDocuments', 'throw new Error("Test error");');
+  await page.goto('/knowledge');
+  await expect(page.getByRole('alert')).toHaveText('Failed to load documents.');
+});
+
+test('sidebar loading, selection, creation, default title and cancellation', async ({ page }) => {
+  await page.goto('/chat');
+  await expect(page.getByRole('heading', { name: 'Start a conversation' })).toBeVisible();
+  const sidebar = page.getByRole('complementary', { name: 'Conversations' });
+  await expect(sidebar.getByRole('button', { name: 'What is posthog', exact: true })).toBeVisible();
+  await expect(sidebar.locator('.chat__item')).toHaveCount(3);
+  await sidebar.getByRole('button', { name: 'Who are our users', exact: true }).click();
+  await expect(sidebar.locator('.chat__item_active')).toHaveText('Who are our users');
+  await sidebar.getByRole('button', { name: '+ New Chat', exact: true }).click();
+  const name = page.getByRole('textbox', { name: 'Chat name' });
+  await expect(name).toBeFocused();
+  await name.fill('Research');
+  await name.press('Enter');
+  await expect(sidebar.locator('.chat__item').first()).toHaveText('Research');
+  await expect(sidebar.locator('.chat__item_active')).toHaveText('Research');
+  await expect(page.getByRole('heading', { name: 'No messages yet' })).toBeVisible();
+  await sidebar.getByRole('button', { name: '+ New Chat', exact: true }).click();
+  await name.fill('Cancelled');
+  await name.press('Escape');
+  await expect(name).toHaveCount(0);
+  await expect(sidebar.locator('.chat__item')).toHaveCount(4);
+  await sidebar.getByRole('button', { name: '+ New Chat', exact: true }).click();
+  await name.fill('   ');
+  await name.press('Enter');
+  await expect(sidebar.locator('.chat__item').first()).toHaveText('New Chat');
+});
+
+test('message loading, Markdown, optimistic send, delay, keyboard and disabled controls', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => { if (['error', 'warning'].includes(message.type())) errors.push(message.text()); });
+  await page.goto('/chat');
+  await expect(page.getByRole('textbox', { name: 'Message', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Who are our users', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText('Loading messages…');
+  await expect(page.locator('.chat__message')).toHaveCount(4);
+  await expect(page.locator('.chat__message_assistant strong')).toBeVisible();
+  await expect(page.locator('.chat__message_assistant ol')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Main user needs' })).toBeVisible();
+  const input = page.getByRole('textbox', { name: 'Message', exact: true });
+  const send = page.getByRole('button', { name: 'Send message' });
+  await expect(send).toBeDisabled();
+  await input.fill('   ');
+  await expect(send).toBeDisabled();
+  await input.fill('A new question');
+  await input.press('Shift+Enter');
+  await expect(input).toHaveValue('A new question\n');
+  await expect(page.locator('.chat__message')).toHaveCount(4);
+  await input.press('Enter');
+  await expect(page.locator('.chat__message')).toHaveCount(5);
+  await expect(input).toHaveValue('');
+  await expect(input).toBeDisabled();
+  await expect(send).toBeDisabled();
+  await expect(page.locator('.chat__message')).toHaveCount(6);
+  await expect(input).toBeEnabled();
+  await input.fill('Click send');
+  await send.click();
+  await expect(page.locator('.chat__message')).toHaveCount(7);
+  await expect(page.locator('.chat__message')).toHaveCount(8);
+  expect(errors).toEqual([]);
+});
+
+test('message loading failure', async ({ page }) => {
+  await changeStub(page, 'getChat', 'throw new Error("Test error");');
+  await page.goto('/chat');
+  await page.getByRole('button', { name: 'Who are our users', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText("Couldn't load this conversation");
+  await expect(page.getByRole('textbox', { name: 'Message', exact: true })).toHaveCount(0);
+});
+
+test('send failure retains user message and shows assistant error', async ({ page }) => {
+  await changeStub(page, 'sendMessage', 'throw new Error("Test error");');
+  await page.goto('/chat');
+  await page.getByRole('button', { name: 'Who are our users', exact: true }).click();
+  const input = page.getByRole('textbox', { name: 'Message', exact: true });
+  await input.fill('Question');
+  await input.press('Enter');
+  await expect(page.locator('.chat__message_user').last()).toContainText('Question');
+  await expect(page.locator('.chat__message_assistant').last()).toContainText('Something went wrong. Please try again.');
+  await expect(input).toBeEnabled();
+});
+
+for (const width of [390, 1199]) {
+  test(`mobile menu and chat sidebar at ${width}px`, async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    page.on('console', (message) => { if (['error', 'warning'].includes(message.type())) errors.push(message.text()); });
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/chat');
+    const menu = page.getByRole('button', { name: 'Open menu' });
+    const drawer = page.getByRole('dialog');
+    await expect(menu).toBeVisible();
+    await expect(page.locator('.header__nav')).toBeHidden();
+    await menu.click();
+    await expect(drawer).toBeVisible();
+    await expect(page.locator('.app-layout__backdrop')).toBeVisible();
+    await expect(drawer.getByRole('navigation')).toBeVisible();
+    await page.locator('.app-layout__backdrop').click({ position: { x: width - 5, y: 400 } });
+    await expect(drawer).toBeHidden();
+    await page.getByRole('button', { name: 'Start New Chat', exact: true }).click();
+    const name = page.getByRole('textbox', { name: 'Chat name' });
+    await expect(drawer).toBeVisible();
+    await expect(name).toBeFocused();
+    await name.fill('Mobile chat');
+    await name.press('Enter');
+    await expect(drawer).toBeHidden();
+    await expect(page.getByRole('heading', { name: 'No messages yet' })).toBeVisible();
+    await menu.click();
+    await drawer.getByRole('button', { name: 'Who are our users', exact: true }).click();
+    await expect(drawer).toBeHidden();
+    await expect(page.locator('.chat__message')).toHaveCount(4);
+    await menu.click();
+    await page.keyboard.press('Escape');
+    await expect(drawer).toBeHidden();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.setViewportSize({ width: 1200, height: 900 });
+    await expect(menu).toBeHidden();
+    await expect(page.locator('.header__nav')).toBeVisible();
+    await expect(page.getByRole('complementary', { name: 'Conversations' })).toBeVisible();
+    expect(errors).toEqual([]);
+  });
+}
+
+test('mobile navigation works on Knowledge Base and focus stays in the open panel', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/knowledge');
+  await page.getByRole('button', { name: 'Open menu' }).click();
+  const drawer = page.getByRole('dialog');
+  await drawer.getByRole('link', { name: 'Chat', exact: true }).click();
+  await expect(page).toHaveURL(/\/chat$/);
+  await expect(drawer).toBeHidden();
+  await page.getByRole('button', { name: 'Open menu' }).click();
+  await expect(drawer).toBeVisible();
+  for (let i = 0; i < 8; i++) {
+    await page.keyboard.press('Tab');
+    expect(await drawer.evaluate((element) => element.contains(document.activeElement))).toBe(true);
+  }
+  await drawer.getByRole('link', { name: 'Knowledge Base', exact: true }).click();
+  await expect(page).toHaveURL(/\/knowledge$/);
+  await expect(drawer).toBeHidden();
+});
+
+test('switching conversations while sending never inserts a reply in the wrong chat', async ({ page }) => {
+  await page.goto('/chat');
+  await page.getByRole('button', { name: 'Who are our users', exact: true }).click();
+  const input = page.getByRole('textbox', { name: 'Message', exact: true });
+  await input.fill('Unique pending question');
+  await input.press('Enter');
+  await page.getByRole('button', { name: 'What is posthog', exact: true }).click();
+  await expect(page.locator('.chat__message')).toHaveCount(4);
+  await expect(input).toBeEnabled();
+  await expect(page.locator('.chat__messages')).not.toContainText('Unique pending question');
+});

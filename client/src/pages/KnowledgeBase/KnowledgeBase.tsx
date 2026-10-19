@@ -3,6 +3,7 @@ import UploadArea from '../../components/UploadArea/UploadArea';
 import { getDocuments } from '../../utils/api';
 import type { KnowledgeDoc } from '../../utils/api';
 import './KnowledgeBase.css';
+import closeIcon from '../../assets/close.svg';
 
 export default function KnowledgeBase() {
   const [documents, setDocuments] = useState<KnowledgeDoc[]>([]);
@@ -47,13 +48,13 @@ export default function KnowledgeBase() {
           {isLoading && <p className="knowledge-base__status" role="status">Loading documents…</p>}
           {!isLoading && error && <p className="knowledge-base__status knowledge-base__status_error" role="alert">{error}</p>}
           {!isLoading && !error && documents.length === 0 && <p className="knowledge-base__status">No documents yet.</p>}
-          {!isLoading && !error && documents.length > 0 && (
+          {documents.length > 0 && (
             <ul className="knowledge-base__documents">
               {documents.map((doc) => (
                 <li className="knowledge-base__document" key={doc._id}>
-                  <span className="knowledge-base__filename" title={doc.fileName}>{doc.title}</span>
+                  <span className="knowledge-base__filename" title={doc.fileName}>{doc.fileName}</span>
                   <button className="knowledge-base__delete" type="button" aria-label={`Delete ${doc.title}`}>
-                    <span className="knowledge-base__delete-icon" aria-hidden="true" />
+                    <img src={closeIcon} alt="" width="16" height="16" />
                   </button>
                 </li>
               ))}

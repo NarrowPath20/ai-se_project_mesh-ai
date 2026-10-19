@@ -1,6 +1,7 @@
 import { useId, useState } from 'react';
 import type { DragEvent } from 'react';
 import './UploadArea.css';
+import uploadIcon from '../../assets/upload.svg';
 
 type Props = { onFileSelect: (file: File) => void };
 
@@ -34,7 +35,8 @@ export default function UploadArea({ onFileSelect }: Props) {
         onDragOver={(event) => { event.preventDefault(); setIsDragging(true); }}
         onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIsDragging(false); }}
         onDrop={handleDrop}>
-        <span className="upload-area__text">Drag and drop your PDF here or <span className="upload-area__browse">choose a file</span></span>
+        <img src={uploadIcon} alt="" width="24" height="24" />
+        <span className="upload-area__text"><span className="upload-area__desktop-text">Drag’n’Drop or </span><span className="upload-area__browse">Upload</span></span>
       </label>
       {error && <p className="upload-area__error" id={`${id}-error`} role="alert">{error}</p>}
     </div>

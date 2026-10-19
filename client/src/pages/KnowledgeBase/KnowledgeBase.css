@@ -1,32 +1,20 @@
-.knowledge-base { width: 100%; max-width: 800px; margin: 0 auto; }
-.knowledge-base__heading {
-  margin-bottom: 40px;
-  font-family: "Space Grotesk", Arial, Helvetica, sans-serif;
-  font-size: clamp(28px, 4vw, 40px);
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: -1px;
-}
-.knowledge-base__content { max-width: 640px; }
-.knowledge-base__label { margin-bottom: 12px; font-size: 16px; font-weight: 500; }
-.knowledge-base__library { margin: 24px 0 32px; }
-.knowledge-base__status { color: #72727a; font-size: 16px; }
+.knowledge-base { width: 100%; max-width: 670px; margin: 0 auto; padding-top: 34px; color: #1c1c1c; }
+.knowledge-base__heading { margin: 0 0 32px; font-family: "Space Grotesk", Arial, Helvetica, sans-serif; font-size: 32px; font-weight: 700; line-height: 41px; }
+.knowledge-base__label { margin-bottom: 12px; font-size: 18px; font-weight: 400; line-height: 21px; }
+.knowledge-base__library { margin: 12px 0 32px; }
+.knowledge-base__status { padding-top: 20px; color: #1c1c1c80; font-size: 18px; line-height: 21px; }
 .knowledge-base__status_error { color: #b42318; }
-.knowledge-base__documents { list-style: none; display: grid; gap: 12px; }
-.knowledge-base__document { display: flex; align-items: center; gap: 16px; min-width: 0; }
-.knowledge-base__filename { flex: 1; overflow-wrap: anywhere; }
-.knowledge-base__delete { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 4px; }
-.knowledge-base__delete:hover { background-color: #f1f0f5; }
-/* Temporary CSS icon until the original Figma asset is accessible. */
-.knowledge-base__delete-icon { position: relative; width: 16px; height: 16px; }
-.knowledge-base__delete-icon::before,
-.knowledge-base__delete-icon::after { content: ""; position: absolute; top: 7px; left: 0; width: 16px; height: 1.5px; background-color: #72727a; transform: rotate(45deg); }
-.knowledge-base__delete-icon::after { transform: rotate(-45deg); }
-.knowledge-base__save { width: 160px; min-height: 48px; padding: 12px 24px; border-radius: 8px; background-color: #6554c0; color: #fff; font-weight: 500; }
-.knowledge-base__save:hover { background-color: #5544ac; }
-.knowledge-base__save:focus-visible,
-.knowledge-base__delete:focus-visible { outline: 2px solid #6554c0; outline-offset: 4px; }
-@media (max-width: 600px) {
-  .knowledge-base__heading { margin-bottom: 32px; letter-spacing: -0.5px; }
-  .knowledge-base__save { width: 100%; }
+.knowledge-base__documents { display: flex; flex-wrap: wrap; gap: 12px; list-style: none; }
+.knowledge-base__document { display: flex; align-items: center; gap: 10px; min-width: 0; max-width: 100%; min-height: 44px; padding: 12px 16px; border-radius: 8px; background: #1c1c1c0d; }
+.knowledge-base__filename { min-width: 0; overflow-wrap: anywhere; font-size: 14px; line-height: 20px; }
+.knowledge-base__delete { display: grid; place-items: center; flex-shrink: 0; width: 16px; height: 16px; border-radius: 2px; }
+.knowledge-base__document:hover { background: #1c1c1c1a; }
+.knowledge-base__save { min-height: 44px; padding: 10px 16px; border-radius: 8px; background: #1c1c1c; color: #fff; font-size: 18px; font-weight: 500; line-height: 24px; }
+.knowledge-base__save:hover { background: #393939; }
+.knowledge-base__save:focus-visible, .knowledge-base__delete:focus-visible { outline: 2px solid #9679d9; outline-offset: 4px; }
+@media (width < 1200px) {
+  .knowledge-base { padding: 32px 4px 8px; }
+  .knowledge-base__library { margin-top: 32px; }
+  .knowledge-base__documents { flex-direction: column; align-items: flex-start; }
+  .knowledge-base__save { width: 100%; min-height: 52px; }
 }
