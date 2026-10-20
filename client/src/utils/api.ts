@@ -1,4 +1,5 @@
 // Local stubs: no backend or authentication is required in this stage.
+import { createId } from './createId';
 export type KnowledgeDoc = {
   _id: string;
   title: string;
@@ -50,7 +51,7 @@ export const createChat = async (title: string): Promise<ApiResponse<Chat>> => {
   return {
     success: true,
     data: {
-      _id: crypto.randomUUID(),
+      _id: createId(),
       title,
       userId: 'u1',
       createdAt: new Date().toISOString(),
@@ -61,10 +62,10 @@ export const createChat = async (title: string): Promise<ApiResponse<Chat>> => {
 
 const sampleConversations: Record<string, { role: Message['role']; content: string }[]> = {
   'chat-1': [
-    { role: 'user', content: 'What is PostHog?' },
-    { role: 'assistant', content: '**PostHog** is a platform for understanding how people use a product. It combines product analytics, session replay, and feature flags.' },
-    { role: 'user', content: 'What could we use it for?' },
-    { role: 'assistant', content: 'A few useful starting points:\n\n- Track important product events.\n- Understand where users leave an onboarding flow.\n- Test a feature with a small group first.' },
+    { role: 'user', content: 'What is posthog, and how can I use it? Give me 5 examples\nThink well' },
+    { role: 'assistant', content: '**PostHog** is an **open-source product analytics platform** that helps teams understand **how users actually use their product**, not just how many users they have.\n\nUnlike tools that focus mainly on pageviews or dashboards, PostHog is built around events, behavior, and experimentation — with strong control over data ownership (cloud or self-hosted).\n\n---' },
+    { role: 'assistant', content: '### What PostHog is (in simple terms)\n\nPostHog lets you answer questions like:\n\n- *What do users do after signing up?*\n- *Where do they drop off?*\n- *Which feature actually brings value?*\n- *Did this design change improve behavior or not?*\n\nIt combines:\n\n- Product analytics (events, funnels, retention)\n- Session recordings\n- Feature flags\n- A/B testing\n- Data warehouse sync\n\nAll in one platform.\n\n---' },
+    { role: 'assistant', content: '### How you use PostHog (high level)\n\n1. **Track events** in your app\n\n   (e.g. `Signed up`, `Clicked “Generate”`, `Uploaded PDF`)\n\n2. **Attach properties**\n\n   (plan type, device, country, company size, etc.)\n\n3. **Analyze behavior** using:\n\n   - Funnels\n   - Trends\n   - Retention\n   - User paths\n\n4. **Experiment & iterate**\n\n   Turn features on/off, run A/B tests, watch recordings' },
   ],
   'chat-2': [
     { role: 'user', content: 'Who are our users?' },
@@ -101,7 +102,7 @@ export const sendMessage = async (chatId: string, text: string): Promise<ApiResp
   return {
     success: true,
     data: {
-      _id: crypto.randomUUID(),
+      _id: createId(),
       chatId,
       role: 'assistant',
       content: `Thanks for your question: “${text}”\n\nThis is a sample response. Connect the chat API to get answers from your knowledge base.`,

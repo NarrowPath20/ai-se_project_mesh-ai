@@ -23,30 +23,28 @@ route. Its logo links home. BrowserRouter supports client navigation; Vite also
 serves these routes directly on refresh. Production hosting must rewrite unknown
 page paths to `index.html`.
 
-The accessible design copy contains Project 2 Part 3 (KnowledgeBase) only.
-Knowledge Base typography, desktop/mobile layout, file chips, upload area, shared
-header styles, and local assets come from that copy. The header logo is a 4x PNG;
-the upload/remove icons are SVGs and the favicon is the exported 16px PNG.
-The existing two-link navigation and mobile hamburger remain as required by
-Part 4; the Part 3 frame's future Profile link is not included.
-Intro copy, feature symbols, and Chat styling remain provisional until the
-Part 4 design is available.
+The design references are the supplied Part 3 Knowledge Base copy and Part 4
+Header, Intro, Chat copy (`Jn66Vwk0y1e4JqB4Pr0U33`, page `445:1744`). Desktop
+and mobile styles use their layout, typography, copy, and exported illustrations.
+The header logo is a 4x PNG; icons are local SVGs and the favicon is the exported
+16px PNG. Intro cards use separate desktop/mobile PNG exports of the complete
+illustration frames. No temporary Figma URLs are used at runtime.
 
 ## Chat sidebar
 
 The delayed local API returns three sample conversations. Click a conversation
-to select it. Click **+ New Chat**, type a name, and press Enter to prepend and
+to select it. Click **+ New Chat**, type a name, and press Enter or **Create chat** to prepend and
 select the new conversation. A blank or whitespace-only name becomes **New
 Chat**. Escape closes and clears the input without creating anything.
 
 Chat data is local component state and resets when leaving the page or
-refreshing. Loading and API errors appear in the sidebar. Styling uses the
-existing palette; exact Figma matching needs the design reference.
+refreshing. Loading and API errors appear in the sidebar.
 
-Below 1200px, the header hamburger opens a sliding navigation and conversation
+Below 1200px, the header hamburger on the left opens a sliding navigation and conversation
 panel. The backdrop, close button, and Escape dismiss it. Selecting or creating a
 conversation dismisses it too. **Start New Chat** opens the panel and focuses the
-name input. Focus stays inside the open panel and page scrolling is locked.
+name input. Conversations occupy the top of the 256px panel and navigation sits
+at the bottom. Focus stays inside the open panel and page scrolling is locked.
 At 1200px and above, navigation and the chat sidebar use the desktop layout.
 
 ## Message area
@@ -57,6 +55,8 @@ messages through the delayed `getChat` stub; newly created chats load no message
 Switching chats discards responses from older requests. User messages appear on
 the right and assistant messages on the left, with Markdown rendered by
 `react-markdown`.
+The PostHog sample matches the design's user prompt and formatted assistant
+sections; the other stub conversations demonstrate additional threads.
 
 The input bar appears for an active chat once loading completes successfully,
 including empty conversations. Enter sends a trimmed, nonempty message;
@@ -76,7 +76,9 @@ conversation state. To check errors, temporarily throw inside the message effect
 
 The page loads sample PDFs, accepts PDFs through the file picker or drag-and-drop,
 and prepends selected files to the list. Files are local metadata only and reset
-on refresh. Save and delete are visual placeholders for the next API integration.
+on refresh. The remove button immediately deletes a document from the local list.
+Removing the last document displays the empty state. Save is a visual placeholder
+for later API integration.
 Uploaded files appear immediately, including while the initial document list is
 still loading. Empty and error states are handled separately.
 
@@ -85,8 +87,8 @@ error in `src/utils/api.ts`, then restore the stub. The default delay is 700 ms.
 
 The upload component and mock API were implemented from the assignment. Document
 names come from the stub and selected PDFs; the layout supports wrapping long
-filenames. The remove icon is exported from Figma; Save and remove actions remain
-placeholders for later API integration.
+filenames. The remove icon is exported from Figma. Local record IDs have a fallback
+for HTTP previews where `crypto.randomUUID` is unavailable.
 
 ## Repository
 

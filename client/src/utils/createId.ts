@@ -1,0 +1,4 @@
+// Local stub records also need IDs when the app is served over plain HTTP.
+export function createId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}

@@ -6,6 +6,11 @@ import ReactMarkdown from 'react-markdown';
 import { createChat, getChat, getChats, sendMessage } from '../../utils/api';
 import type { Chat as ChatType, Message } from '../../utils/api';
 import './Chat.css';
+import { createId } from '../../utils/createId';
+import { Link } from 'react-router-dom';
+import plusIcon from '../../assets/plus.svg';
+import sendIcon from '../../assets/send.svg';
+import errorIcon from '../../assets/chat-error.svg';
 
 export default function Chat() {
   const { isMobile, sidebarContainer, setIsMenuOpen } = useAppLayout();
@@ -16,6 +21,8 @@ export default function Chat() {
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [newChatTitle, setNewChatTitle] = useState('');
+  const [isSubmittingChat, setIsSubmittingChat] = useState(false);
+  const creatingChat = useRef(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [messagesError, setMessagesError] = useState('');
@@ -81,7 +88,7 @@ export default function Chat() {
     const chatId = activeChatId;
     const version = selectionVersion.current;
     const userMessage: Message = {
-      _id: crypto.randomUUID(),
+      _id: createId(),
       chatId,
       role: 'user',
       content: text,
@@ -99,7 +106,7 @@ export default function Chat() {
       if (selectionVersion.current === version) setMessages((current) => [...current, reply]);
     } catch {
       const errorMessage: Message = {
-        _id: crypto.randomUUID(),
+        _id: createId(),
         chatId,
         role: 'assistant',
         content: 'Something went wrong. Please try again.',
@@ -132,16 +139,23 @@ export default function Chat() {
   };
 
   const handleCreateChat = async () => {
+    if (creatingChat.current) return;
+    creatingChat.current = true;
+    setIsSubmittingChat(true);
     const title = newChatTitle.trim() || 'New Chat';
-    closeTitleInput();
     try {
       const res = await createChat(title);
       if (!res.success || !res.data) throw new Error('Failed to create chat.');
       const chat = res.data;
+      closeTitleInput();
+      setChatsError(null);
       setChats((current) => [chat, ...current]);
       selectChat(chat._id);
     } catch {
       setChatsError('Failed to create chat. Please try again.');
+    } finally {
+      creatingChat.current = false;
+      setIsSubmittingChat(false);
     }
   };
 
@@ -152,29 +166,32 @@ export default function Chat() {
         type="button"
         ref={newChatButton}
         aria-expanded={isCreatingChat}
+        aria-label="+ New Chat"
         onClick={() => setIsCreatingChat(true)}
       >
-        + New Chat
+        <img src={plusIcon} width="16" height="16" alt="" />New Chat
       </button>
       {isCreatingChat && (
-        <input
-          ref={titleInput}
-          className="chat__title-input"
-          type="text"
-          aria-label="Chat name"
-          placeholder="Chat name"
-          value={newChatTitle}
-          onChange={(event) => setNewChatTitle(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.nativeEvent.isComposing) return;
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              void handleCreateChat();
-            }
-            if (event.key === 'Escape') closeTitleInput();
-          }}
-          autoFocus
-        />
+        <form className="chat__create-form" onSubmit={(event) => { event.preventDefault(); void handleCreateChat(); }}>
+          <input
+            ref={titleInput}
+            className="chat__title-input"
+            type="text"
+            aria-label="Chat name"
+            placeholder="Chat name"
+            value={newChatTitle}
+            disabled={isSubmittingChat}
+            onChange={(event) => setNewChatTitle(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.nativeEvent.isComposing) return;
+              if (event.key === 'Escape') closeTitleInput();
+            }}
+            autoFocus
+          />
+          <button className="chat__create-submit" type="submit" disabled={isSubmittingChat}>
+            {isSubmittingChat ? 'Creating…' : 'Create chat'}
+          </button>
+        </form>
       )}
       {isLoadingChats && <p className="chat__sidebar-message" role="status">Loading…</p>}
       {chatsError && <p className="chat__sidebar-message chat__sidebar-message_error" role="alert">{chatsError}</p>}
@@ -198,26 +215,26 @@ export default function Chat() {
   return (
     <div className="chat">
       {isMobile && sidebarContainer ? createPortal(sidebar, sidebarContainer) : sidebar}
-      <section className="chat__main" aria-label="Conversation messages" aria-busy={isLoadingMessages}>
+      <section className={`chat__main${!activeChatId || (!isLoadingMessages && !messagesError && messages.length === 0) ? ' chat__main_empty' : ''}${isLoadingMessages ? ' chat__main_loading' : ''}${messagesError ? ' chat__main_error' : ''}`} aria-label="Conversation messages" aria-busy={isLoadingMessages}>
         {!activeChatId ? (
           <div className="chat__no-messages">
-            <h1 className="chat__state-title">Start a conversation</h1>
-            <p>Select a chat or create a new one to explore your knowledge.</p>
+            <h1 className="chat__state-title">Create a new chat or select an existing one to start the conversation</h1>
             <button className="chat__new-btn chat__start-btn" type="button" onClick={startNewChat}>Start New Chat</button>
           </div>
         ) : isLoadingMessages ? (
-          <p className="chat__no-messages" role="status">Loading messages…</p>
+          <p className="chat__no-messages chat__loading" role="status">Loading...</p>
         ) : messagesError ? (
           <div className="chat__error" role="alert">
-            <h2 className="chat__state-title">Couldn't load this conversation</h2>
-            <p>{messagesError}</p>
+            <div className="chat__error-icon"><img src={errorIcon} alt="" /></div>
+            <h2 className="chat__state-title">Looks like something went wrong</h2>
+            <p>Try reloading the page or creating the chat again</p>
+            <Link className="chat__main-link" to="/">Go to the Main Page</Link>
           </div>
         ) : (
           <>
             {messages.length === 0 ? (
               <div className="chat__no-messages">
-                <h2 className="chat__state-title">No messages yet</h2>
-                <p>This conversation is ready for your first question.</p>
+                <h2 className="chat__state-title"><span className="chat__empty-desktop">Ask a question below<br />to start the conversation</span><span className="chat__empty-mobile">Ask a question<br />below to start<br />the conversation</span></h2>
               </div>
             ) : (
               <ul className="chat__messages" aria-label="Messages">
@@ -249,7 +266,7 @@ export default function Chat() {
                 onClick={() => void handleSend()}
                 disabled={isSending || !input.trim()}
               >
-                <span aria-hidden="true">↑</span>
+                <img src={sendIcon} width="24" height="24" alt="" />
               </button>
             </div>
             {isSending && <p className="chat__sending" role="status">Sending message…</p>}

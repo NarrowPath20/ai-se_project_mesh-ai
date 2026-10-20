@@ -74,11 +74,11 @@ export default function AppLayout() {
         }}
       >
         <button className="app-layout__close" onClick={() => setIsMenuOpen(false)} aria-label="Close navigation">×</button>
+        <div className="app-layout__conversations" ref={setSidebarContainer} />
         <nav className="app-layout__mobile-nav" aria-label="Mobile navigation">
           <NavLink to="/knowledge" onClick={() => setIsMenuOpen(false)}>Knowledge Base</NavLink>
           <NavLink to="/chat" onClick={() => setIsMenuOpen(false)}>Chat</NavLink>
         </nav>
-        <div ref={setSidebarContainer} />
       </div>
       <main className="app-layout__main" inert={isMobile && isMenuOpen}>
         <Outlet context={{ isMobile, sidebarContainer, setIsMenuOpen } satisfies LayoutContext} />

@@ -1,6 +1,7 @@
 import { Link, NavLink } from 'react-router-dom';
 import './Header.css';
 import logo from '../../assets/logo.png';
+import menuIcon from '../../assets/menu.svg';
 
 type Props = { isMenuOpen: boolean; onMenuToggle: () => void };
 
@@ -19,7 +20,7 @@ export default function Header({ isMenuOpen, onMenuToggle }: Props) {
         <NavLink to="/chat" className={getNavLinkClass}>Chat</NavLink>
       </nav>
       <button className="header__hamburger" type="button" aria-label="Open menu" aria-expanded={isMenuOpen} aria-controls="mobile-menu" onClick={onMenuToggle}>
-        <span /><span /><span />
+        <img src={menuIcon} width="24" height="24" alt="" />
       </button>
     </header>
   );

@@ -4,6 +4,7 @@ import { getDocuments } from '../../utils/api';
 import type { KnowledgeDoc } from '../../utils/api';
 import './KnowledgeBase.css';
 import closeIcon from '../../assets/close.svg';
+import { createId } from '../../utils/createId';
 
 export default function KnowledgeBase() {
   const [documents, setDocuments] = useState<KnowledgeDoc[]>([]);
@@ -29,7 +30,7 @@ export default function KnowledgeBase() {
 
   const handleFileSelect = (file: File) => {
     const newDoc: KnowledgeDoc = {
-      _id: crypto.randomUUID(),
+      _id: createId(),
       title: file.name,
       fileName: file.name,
       userId: 'local',
@@ -53,7 +54,8 @@ export default function KnowledgeBase() {
               {documents.map((doc) => (
                 <li className="knowledge-base__document" key={doc._id}>
                   <span className="knowledge-base__filename" title={doc.fileName}>{doc.fileName}</span>
-                  <button className="knowledge-base__delete" type="button" aria-label={`Delete ${doc.title}`}>
+                  <button className="knowledge-base__delete" type="button" aria-label={`Delete ${doc.fileName}`}
+                    onClick={() => setDocuments((current) => current.filter((document) => document._id !== doc._id))}>
                     <img src={closeIcon} alt="" width="16" height="16" />
                   </button>
                 </li>

@@ -22,7 +22,7 @@ test('routes, refresh, Start, active links and favicon', async ({ page }) => {
   page.on('console', (message) => { if (['error', 'warning'].includes(message.type())) errors.push(message.text()); });
   await page.goto('/');
   await expect(page.locator('header')).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Welcome to MeshAI' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Welcome to Mesh AI' })).toBeVisible();
   await page.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(page).toHaveURL(/\/knowledge$/);
   for (const path of ['/knowledge', '/chat', '/']) {
@@ -59,6 +59,35 @@ test('documents empty state', async ({ page }) => {
   await expect(page.getByText('No documents yet.', { exact: true })).toBeVisible();
 });
 
+test('PDFs can be removed, including the last file and uploaded files', async ({ page }) => {
+  await page.goto('/knowledge');
+  await expect(page.locator('.knowledge-base__document')).toHaveCount(3);
+  await page.getByRole('button', { name: 'Delete code-review-guidelines.pdf', exact: true }).click();
+  await expect(page.getByText('code-review-guidelines.pdf', { exact: true })).toHaveCount(0);
+  await page.locator('input[type=file]').setInputFiles({ name: 'remove-me.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') });
+  await page.getByRole('button', { name: 'Delete remove-me.pdf', exact: true }).click();
+  await expect(page.getByText('remove-me.pdf', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Delete onboarding-handbook.pdf', exact: true }).click();
+  await page.getByRole('button', { name: 'Delete engineering-best-practices.pdf', exact: true }).click();
+  await expect(page.getByText('No documents yet.', { exact: true })).toBeVisible();
+});
+
+test('creating chats and uploading PDFs works without crypto.randomUUID', async ({ page }) => {
+  await page.addInitScript(() => Object.defineProperty(globalThis.crypto, 'randomUUID', { value: undefined, configurable: true }));
+  await page.goto('/chat');
+  await page.getByRole('button', { name: '+ New Chat', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Chat name' }).fill('HTTP compatible chat');
+  await page.getByRole('button', { name: 'Create chat', exact: true }).click();
+  await expect(page.locator('.chat__item_active')).toHaveText('HTTP compatible chat');
+  await expect(page.getByRole('heading', { name: /Ask a question below\s*to start the conversation/ })).toBeVisible();
+  await page.getByRole('textbox', { name: 'Message', exact: true }).fill('Hello');
+  await page.getByRole('button', { name: 'Send message' }).click();
+  await expect(page.locator('.chat__message')).toHaveCount(2);
+  await page.goto('/knowledge');
+  await page.locator('input[type=file]').setInputFiles({ name: 'http.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') });
+  await expect(page.getByText('http.pdf', { exact: true })).toBeVisible();
+});
+
 test('documents error state', async ({ page }) => {
   await changeStub(page, 'getDocuments', 'throw new Error("Test error");');
   await page.goto('/knowledge');
@@ -67,7 +96,7 @@ test('documents error state', async ({ page }) => {
 
 test('sidebar loading, selection, creation, default title and cancellation', async ({ page }) => {
   await page.goto('/chat');
-  await expect(page.getByRole('heading', { name: 'Start a conversation' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Create a new chat or select an existing one to start the conversation' })).toBeVisible();
   const sidebar = page.getByRole('complementary', { name: 'Conversations' });
   await expect(sidebar.getByRole('button', { name: 'What is posthog', exact: true })).toBeVisible();
   await expect(sidebar.locator('.chat__item')).toHaveCount(3);
@@ -80,7 +109,7 @@ test('sidebar loading, selection, creation, default title and cancellation', asy
   await name.press('Enter');
   await expect(sidebar.locator('.chat__item').first()).toHaveText('Research');
   await expect(sidebar.locator('.chat__item_active')).toHaveText('Research');
-  await expect(page.getByRole('heading', { name: 'No messages yet' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Ask a question below\s*to start the conversation/ })).toBeVisible();
   await sidebar.getByRole('button', { name: '+ New Chat', exact: true }).click();
   await name.fill('Cancelled');
   await name.press('Escape');
@@ -99,7 +128,7 @@ test('message loading, Markdown, optimistic send, delay, keyboard and disabled c
   await page.goto('/chat');
   await expect(page.getByRole('textbox', { name: 'Message', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Who are our users', exact: true }).click();
-  await expect(page.getByRole('status')).toHaveText('Loading messages…');
+  await expect(page.getByRole('status')).toHaveText('Loading...');
   await expect(page.locator('.chat__message')).toHaveCount(4);
   await expect(page.locator('.chat__message_assistant strong')).toBeVisible();
   await expect(page.locator('.chat__message_assistant ol')).toBeVisible();
@@ -131,7 +160,7 @@ test('message loading failure', async ({ page }) => {
   await changeStub(page, 'getChat', 'throw new Error("Test error");');
   await page.goto('/chat');
   await page.getByRole('button', { name: 'Who are our users', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText("Couldn't load this conversation");
+  await expect(page.getByRole('alert')).toContainText("Looks like something went wrong");
   await expect(page.getByRole('textbox', { name: 'Message', exact: true })).toHaveCount(0);
 });
 
@@ -157,6 +186,9 @@ for (const width of [390, 1199]) {
     const menu = page.getByRole('button', { name: 'Open menu' });
     const drawer = page.getByRole('dialog');
     await expect(menu).toBeVisible();
+    const hamburgerBox = await menu.boundingBox();
+    const logoBox = await page.locator('.header__logo').boundingBox();
+    expect(hamburgerBox!.x).toBeLessThan(logoBox!.x);
     await expect(page.locator('.header__nav')).toBeHidden();
     await menu.click();
     await expect(drawer).toBeVisible();
@@ -171,7 +203,7 @@ for (const width of [390, 1199]) {
     await name.fill('Mobile chat');
     await name.press('Enter');
     await expect(drawer).toBeHidden();
-    await expect(page.getByRole('heading', { name: 'No messages yet' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Ask a question below\s*to start the conversation/ })).toBeVisible();
     await menu.click();
     await drawer.getByRole('button', { name: 'Who are our users', exact: true }).click();
     await expect(drawer).toBeHidden();
@@ -217,4 +249,28 @@ test('switching conversations while sending never inserts a reply in the wrong c
   await expect(page.locator('.chat__message')).toHaveCount(4);
   await expect(input).toBeEnabled();
   await expect(page.locator('.chat__messages')).not.toContainText('Unique pending question');
+});
+
+test('Part 4 desktop and mobile geometry and exported illustrations', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 800 });
+  await page.goto('/');
+  const intro = await page.locator('.intro').boundingBox();
+  expect(intro).toMatchObject({ x: 385, y: 158, width: 670, height: 444 });
+  await expect(page.locator('.intro__card')).toHaveCount(3);
+  expect(await page.locator('.intro__features img').evaluateAll((images) => images.every((image) => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
+  await page.goto('/chat');
+  await expect(page.locator('.chat__sidebar')).toHaveCSS('width', '220px');
+  expect((await page.locator('.chat__main').boundingBox())?.x).toBe(385);
+  await page.setViewportSize({ width: 394, height: 852 });
+  await page.goto('/');
+  await expect(page.locator('.intro__card').first()).toHaveCSS('height', '142px');
+  await page.goto('/chat');
+  await expect(page.locator('header')).toHaveCSS('height', '61px');
+  await page.getByRole('button', { name: 'Open menu' }).click();
+  await expect(page.getByRole('dialog')).toHaveCSS('width', '256px');
+  expect((await page.getByRole('dialog').boundingBox())?.y).toBe(61);
+  await page.getByRole('button', { name: 'What is posthog', exact: true }).click();
+  await expect(page.locator('.chat__message')).toHaveCount(4);
+  await expect(page.locator('.chat__input-bar')).toHaveCSS('height', '100px');
+  expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight && document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
