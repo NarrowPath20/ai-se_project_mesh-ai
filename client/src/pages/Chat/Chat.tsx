@@ -13,7 +13,7 @@ import sendIcon from '../../assets/send.svg';
 import errorIcon from '../../assets/chat-error.svg';
 
 export default function Chat() {
-  const { isMobile, sidebarContainer, setIsMenuOpen } = useAppLayout();
+  const { isMobile, sidebarContainer, setIsMenuOpen, closeMenu } = useAppLayout();
   const titleInput = useRef<HTMLInputElement>(null);
   const [chats, setChats] = useState<ChatType[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -71,7 +71,7 @@ export default function Chat() {
   }, [activeChatId]);
 
   const selectChat = (chatId: string) => {
-    setIsMenuOpen(false);
+    closeMenu();
     if (chatId === activeChatId) return;
     selectionVersion.current += 1;
     setInput('');
@@ -169,7 +169,7 @@ export default function Chat() {
         aria-label="+ New Chat"
         onClick={() => setIsCreatingChat(true)}
       >
-        <img src={plusIcon} width="16" height="16" alt="" />New Chat
+        <img src={plusIcon} width="16" height="16" alt="Add conversation" />New Chat
       </button>
       {isCreatingChat && (
         <form className="chat__create-form" onSubmit={(event) => { event.preventDefault(); void handleCreateChat(); }}>
@@ -225,7 +225,7 @@ export default function Chat() {
           <p className="chat__no-messages chat__loading" role="status">Loading...</p>
         ) : messagesError ? (
           <div className="chat__error" role="alert">
-            <div className="chat__error-icon"><img src={errorIcon} alt="" /></div>
+            <div className="chat__error-icon"><img src={errorIcon} alt="Warning triangle with an exclamation mark" /></div>
             <h2 className="chat__state-title">Looks like something went wrong</h2>
             <p>Try reloading the page or creating the chat again</p>
             <Link className="chat__main-link" to="/">Go to the Main Page</Link>
@@ -266,7 +266,7 @@ export default function Chat() {
                 onClick={() => void handleSend()}
                 disabled={isSending || !input.trim()}
               >
-                <img src={sendIcon} width="24" height="24" alt="" />
+                <img src={sendIcon} width="24" height="24" alt="Send message paper plane" />
               </button>
             </div>
             {isSending && <p className="chat__sending" role="status">Sending message…</p>}

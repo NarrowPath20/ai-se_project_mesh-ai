@@ -35,7 +35,7 @@ export default function UploadArea({ onFileSelect }: Props) {
         onDragOver={(event) => { event.preventDefault(); setIsDragging(true); }}
         onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIsDragging(false); }}
         onDrop={handleDrop}>
-        <img src={uploadIcon} alt="" width="24" height="24" />
+        <img src={uploadIcon} alt="Upload PDF to the knowledge base" width="24" height="24" />
         <span className="upload-area__text"><span className="upload-area__desktop-text">Drag’n’Drop or </span><span className="upload-area__browse">Upload</span></span>
       </label>
       {error && <p className="upload-area__error" id={`${id}-error`} role="alert">{error}</p>}

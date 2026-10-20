@@ -56,7 +56,7 @@ export default function KnowledgeBase() {
                   <span className="knowledge-base__filename" title={doc.fileName}>{doc.fileName}</span>
                   <button className="knowledge-base__delete" type="button" aria-label={`Delete ${doc.fileName}`}
                     onClick={() => setDocuments((current) => current.filter((document) => document._id !== doc._id))}>
-                    <img src={closeIcon} alt="" width="16" height="16" />
+                    <img src={closeIcon} alt="Remove PDF" width="16" height="16" />
                   </button>
                 </li>
               ))}

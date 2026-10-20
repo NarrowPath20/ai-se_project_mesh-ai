@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import type { LayoutContext } from '../../hooks/useAppLayout';
 import Header from '../Header/Header';
@@ -9,13 +9,14 @@ export default function AppLayout() {
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(width < 1200px)').matches);
   const [sidebarContainer, setSidebarContainer] = useState<HTMLDivElement | null>(null);
   const drawer = useRef<HTMLDivElement>(null);
+  const closeMenu = useCallback(() => setIsMenuOpen(false), []);
 
   useEffect(() => {
     const query = window.matchMedia('(width < 1200px)');
-    const update = () => { setIsMobile(query.matches); setIsMenuOpen(false); };
+    const update = () => { setIsMobile(query.matches); closeMenu(); };
     query.addEventListener('change', update);
     return () => query.removeEventListener('change', update);
-  }, []);
+  }, [closeMenu]);
 
   useEffect(() => {
     if (!isMenuOpen || !isMobile) return;
@@ -25,7 +26,7 @@ export default function AppLayout() {
     if (!drawer.current?.contains(document.activeElement)) drawer.current?.focus();
     const focusInput = requestAnimationFrame(() => drawer.current?.querySelector('input')?.focus());
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === 'Escape') { event.preventDefault(); setIsMenuOpen(false); }
+      if (event.key === 'Escape') { event.preventDefault(); closeMenu(); }
       if (event.key !== 'Tab') return;
       const controls = drawer.current?.querySelectorAll<HTMLElement>('a[href], button:not(:disabled), input:not(:disabled), [tabindex="0"]');
       if (!controls?.length) return;
@@ -49,14 +50,14 @@ export default function AppLayout() {
       document.removeEventListener('keydown', onKeyDown);
       if (previousFocus?.isConnected) previousFocus.focus();
     };
-  }, [isMenuOpen, isMobile]);
+  }, [isMenuOpen, isMobile, closeMenu]);
 
   return (
     <div className="app-layout">
       <div inert={isMobile && isMenuOpen}>
         <Header isMenuOpen={isMenuOpen} onMenuToggle={() => setIsMenuOpen(!isMenuOpen)} />
       </div>
-      {isMobile && isMenuOpen && <button className="app-layout__backdrop" tabIndex={-1} aria-label="Close menu" onClick={() => setIsMenuOpen(false)} />}
+      {isMobile && isMenuOpen && <button className="app-layout__backdrop" tabIndex={-1} aria-label="Close menu" onClick={closeMenu} />}
       <div
         className={`app-layout__drawer${isMenuOpen ? ' app-layout__drawer_open' : ''}`}
         id="mobile-menu"
@@ -73,15 +74,15 @@ export default function AppLayout() {
           else if (!drawer.current?.contains(document.activeElement)) drawer.current?.focus();
         }}
       >
-        <button className="app-layout__close" onClick={() => setIsMenuOpen(false)} aria-label="Close navigation">×</button>
+        <button className="app-layout__close" onClick={closeMenu} aria-label="Close navigation">×</button>
         <div className="app-layout__conversations" ref={setSidebarContainer} />
         <nav className="app-layout__mobile-nav" aria-label="Mobile navigation">
-          <NavLink to="/knowledge" onClick={() => setIsMenuOpen(false)}>Knowledge Base</NavLink>
-          <NavLink to="/chat" onClick={() => setIsMenuOpen(false)}>Chat</NavLink>
+          <NavLink to="/knowledge" onClick={closeMenu}>Knowledge Base</NavLink>
+          <NavLink to="/chat" onClick={closeMenu}>Chat</NavLink>
         </nav>
       </div>
       <main className="app-layout__main" inert={isMobile && isMenuOpen}>
-        <Outlet context={{ isMobile, sidebarContainer, setIsMenuOpen } satisfies LayoutContext} />
+        <Outlet context={{ isMobile, sidebarContainer, setIsMenuOpen, closeMenu } satisfies LayoutContext} />
       </main>
     </div>
   );

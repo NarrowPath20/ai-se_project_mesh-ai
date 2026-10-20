@@ -13,14 +13,14 @@ export default function Header({ isMenuOpen, onMenuToggle }: Props) {
   return (
     <header className="header">
       <Link className="header__logo" to="/" aria-label="MeshAI home">
-        <img src={logo} alt="Mesh AI" width="99" height="26" />
+        <img src={logo} alt="Mesh AI logo" width="99" height="26" />
       </Link>
       <nav className="header__nav" aria-label="Main navigation">
         <NavLink to="/knowledge" className={getNavLinkClass}>Knowledge Base</NavLink>
         <NavLink to="/chat" className={getNavLinkClass}>Chat</NavLink>
       </nav>
       <button className="header__hamburger" type="button" aria-label="Open menu" aria-expanded={isMenuOpen} aria-controls="mobile-menu" onClick={onMenuToggle}>
-        <img src={menuIcon} width="24" height="24" alt="" />
+        <img src={menuIcon} width="24" height="24" alt="Navigation menu" />
       </button>
     </header>
   );

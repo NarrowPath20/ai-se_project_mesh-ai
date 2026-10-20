@@ -8,9 +8,9 @@ import chatMobile from '../../assets/intro-chat-mobile.png';
 import './Intro.css';
 
 const features = [
-  { image: documents, mobileImage: documentsMobile, description: 'Bring all your documents into one secure AI workspace' },
-  { image: organize, mobileImage: organizeMobile, description: 'Organize and manage the documents that power your AI' },
-  { image: chat, mobileImage: chatMobile, description: 'Your knowledge base, accessible through a simple chat interface' },
+  { image: documents, mobileImage: documentsMobile, alt: 'Stack of documents', description: 'Bring all your documents into one secure AI workspace' },
+  { image: organize, mobileImage: organizeMobile, alt: 'Folder organizing documents', description: 'Organize and manage the documents that power your AI' },
+  { image: chat, mobileImage: chatMobile, alt: 'Documents with AI sparkles', description: 'Your knowledge base, accessible through a simple chat interface' },
 ];
 
 export default function Intro() {
@@ -19,11 +19,11 @@ export default function Intro() {
     <main className="intro">
       <h1 className="intro__heading">Welcome <span>to Mesh AI</span><span className="intro__mark" aria-hidden="true"><i /><i /><i /><i /><i /><i /></span></h1>
       <ul className="intro__features">
-        {features.map(({ image, mobileImage, description }) => (
+        {features.map(({ image, mobileImage, alt, description }) => (
           <li className="intro__card" key={description}>
             <picture className="intro__icon">
               <source media="(width < 700px)" srcSet={mobileImage} />
-              <img src={image} alt="" />
+              <img src={image} alt={alt} />
             </picture>
             <p className="intro__card-description">{image === documents ? <>Bring all your documents <br className="intro__desktop-break" />into one secure <br className="intro__desktop-break" />AI workspace</> : description}</p>
           </li>
