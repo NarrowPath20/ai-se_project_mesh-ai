@@ -1,12 +1,37 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { mockChats } from './chat-fixture';
 
 test.beforeEach(async ({ page }) => {
+  await mockChats(page);
+  await page.route('**/api/documents', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    const fileName = route.request().postData()?.match(/filename="([^"]+)"/)?.[1] ?? 'uploaded.pdf';
+    const doc = (name: string) => ({ _id: name, fileName: name, title: name, userId: 'test-user', createdAt: new Date().toISOString() });
+    await route.fulfill({ json: { success: true, data: route.request().method() === 'POST'
+      ? doc(fileName)
+      : ['code-review-guidelines.pdf', 'onboarding-handbook.pdf', 'engineering-best-practices.pdf'].map(doc), error: null } });
+  });
+  await page.addInitScript(() => localStorage.setItem('auth-token', 'test-token'));
+  await page.route('**/api/users/me', (route) => route.fulfill({ json: {
+    success: true, data: { userId: 'test-user', email: 'test@example.com', name: 'Test User' }, error: null,
+  } }));
   // External font availability should not affect local application checks.
   await page.route('https://fonts.googleapis.com/**', (route) => route.fulfill({ body: '', contentType: 'text/css' }));
 });
 
 async function changeStub(page: Page, name: string, injectedCode: string) {
+  if (name === 'getChat' || name === 'sendMessage') {
+    await page.route(name === 'getChat' ? '**/api/chats/*' : '**/api/chats/*/messages', (route) =>
+      route.fulfill({ status: 500, json: { success: false, data: null, error: { message: 'Test error' } } }));
+    return;
+  }
+  if (name === 'getDocuments') {
+    await page.route('**/api/documents', (route) => route.fulfill(injectedCode.includes('throw')
+      ? { status: 500, json: { success: false, data: null, error: { message: 'Test error' } } }
+      : { json: { success: true, data: [], error: null } }));
+    return;
+  }
   await page.route('**/src/utils/api.ts', async (route) => {
     const response = await route.fetch();
     const body = await response.text();
@@ -143,7 +168,8 @@ test('message loading, Markdown, optimistic send, delay, keyboard and disabled c
   await expect(input).toHaveValue('A new question\n');
   await expect(page.locator('.chat__message')).toHaveCount(4);
   await input.press('Enter');
-  await expect(page.locator('.chat__message')).toHaveCount(5);
+  await expect(page.getByRole('status')).toHaveText('Thinking…');
+  await expect(page.locator('.chat__message_user')).toHaveCount(3);
   await expect(input).toHaveValue('');
   await expect(input).toBeDisabled();
   await expect(send).toBeDisabled();
@@ -151,7 +177,7 @@ test('message loading, Markdown, optimistic send, delay, keyboard and disabled c
   await expect(input).toBeEnabled();
   await input.fill('Click send');
   await send.click();
-  await expect(page.locator('.chat__message')).toHaveCount(7);
+  await expect(page.getByRole('status')).toHaveText('Thinking…');
   await expect(page.locator('.chat__message')).toHaveCount(8);
   expect(errors).toEqual([]);
 });

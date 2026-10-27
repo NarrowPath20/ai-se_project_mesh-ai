@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import UploadArea from '../../components/UploadArea/UploadArea';
-import { getDocuments } from '../../utils/api';
+import { getDocuments, uploadDocument } from '../../utils/api';
 import type { KnowledgeDoc } from '../../utils/api';
 import './KnowledgeBase.css';
 import closeIcon from '../../assets/close.svg';
-import { createId } from '../../utils/createId';
 
 export default function KnowledgeBase() {
   const [documents, setDocuments] = useState<KnowledgeDoc[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -17,7 +17,10 @@ export default function KnowledgeBase() {
       try {
         const res = await getDocuments();
         if (!res.success) throw new Error(res.error?.message || 'Failed to load documents.');
-        if (active) setDocuments((current) => [...current, ...(res.data || [])]);
+        if (active) setDocuments((current) => [
+          ...current,
+          ...(res.data || []).filter((doc) => !current.some((existing) => existing._id === doc._id)),
+        ]);
       } catch {
         if (active) setError('Failed to load documents.');
       } finally {
@@ -28,15 +31,20 @@ export default function KnowledgeBase() {
     return () => { active = false; };
   }, []);
 
-  const handleFileSelect = (file: File) => {
-    const newDoc: KnowledgeDoc = {
-      _id: createId(),
-      title: file.name,
-      fileName: file.name,
-      userId: 'local',
-      createdAt: new Date().toISOString(),
-    };
-    setDocuments((current) => [newDoc, ...current]);
+  const handleFileSelect = async (file: File) => {
+    if (isUploading) return;
+    setIsUploading(true);
+    setError(null);
+    try {
+      const res = await uploadDocument(file);
+      if (!res.success || !res.data) throw new Error(res.error?.message || 'Failed to upload document.');
+      const newDoc = res.data;
+      setDocuments((current) => [newDoc, ...current.filter((doc) => doc._id !== newDoc._id)]);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to upload document.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -44,7 +52,7 @@ export default function KnowledgeBase() {
       <h1 className="knowledge-base__heading">Manage Your Knowledge Base</h1>
       <section className="knowledge-base__content" aria-label="Knowledge base documents">
         <p className="knowledge-base__label">Upload documents (PDF)</p>
-        <UploadArea onFileSelect={handleFileSelect} />
+        <UploadArea onFileSelect={handleFileSelect} isUploading={isUploading} />
         <div className="knowledge-base__library" aria-busy={isLoading} aria-live="polite">
           {isLoading && <p className="knowledge-base__status" role="status">Loading documents…</p>}
           {!isLoading && error && <p className="knowledge-base__status knowledge-base__status_error" role="alert">{error}</p>}
@@ -63,7 +71,6 @@ export default function KnowledgeBase() {
             </ul>
           )}
         </div>
-        <button className="knowledge-base__save" type="button">Save</button>
       </section>
     </div>
   );

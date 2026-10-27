@@ -1,0 +1,22 @@
+.auth-page { display: flex; flex: 1; justify-content: center; align-items: center; padding: 48px 20px; }
+.auth-page__content { width: 100%; max-width: 400px; }
+.form__title { font: 700 32px/1.2 "Space Grotesk", Arial, sans-serif; }
+.form__description { margin-top: 12px; color: #62626b; }
+.form__nav { display: flex; gap: 8px; margin: 28px 0; padding: 4px; border-radius: 10px; background: #f6f3ff; }
+.form__link { flex: 1; padding: 10px 16px; border-radius: 8px; color: #1d1d1f; text-align: center; text-decoration: none; }
+.form__link:hover { background: #9679d933; }
+.form__link_active { background: #9679d933; font-weight: 600; }
+.form { display: flex; flex-direction: column; gap: 16px; }
+.form__field { display: flex; flex-direction: column; gap: 6px; }
+.form__label { font-weight: 500; }
+.form__input { width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid #b9b9c0; border-radius: 8px; color: #1d1d1f; background: #fff; cursor: text; }
+.form__input[aria-invalid="true"] { border-color: #b42318; }
+.form__input:focus-visible, .form__link:focus-visible, .form__submit:focus-visible { outline: 2px solid #6554c0; outline-offset: 3px; }
+.form__error, .form__status { min-height: 18px; color: #b42318; font-size: 13px; line-height: 18px; overflow-wrap: anywhere; }
+.form__submit { min-height: 48px; padding: 12px 16px; border-radius: 8px; background: #1c1c1c; color: #fff; font-weight: 500; cursor: pointer; }
+.form__submit:hover:enabled { background: #393939; }
+.form__submit:disabled { background: #e5e5ea; color: #65656d; cursor: default; }
+@media (width < 700px) {
+  .auth-page { align-items: flex-start; padding: 40px 20px; }
+  .form__title { font-size: 28px; }
+}

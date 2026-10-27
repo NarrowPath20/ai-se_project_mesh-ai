@@ -50,7 +50,7 @@ export const errorHandler: ErrorRequestHandler = (
     error.code === 11000
   ) {
     status = 409;
-    message = 'Email is already in use';
+    message = 'Email already in use';
   }
   if (status === 500) console.error(error);
   res.status(status).json({ success: false, data: null, error: { message } });

@@ -2,7 +2,12 @@ import Document from '../models/document.js';
 import Chunk from '../models/chunk.js';
 import { createEmbedding } from './embeddings.js';
 import { rankBySimilarity } from './vector-search.js';
-import { getClient, LLM_MODEL, buildContext } from './openai-client.js';
+import {
+  getClient,
+  LLM_MODEL,
+  buildContext,
+  stripThinking,
+} from './openai-client.js';
 export const answerQuestion = async (userId: string, question: string) => {
   const documents = await Document.find({ userId }, '_id');
   const records = await Chunk.find({
@@ -30,7 +35,8 @@ export const answerQuestion = async (userId: string, question: string) => {
       },
     ],
   });
-  const answer = response.choices[0]?.message.content?.trim();
-  if (!answer) throw new Error('AI returned an empty answer');
+  const answer =
+    stripThinking(response.choices[0]?.message.content ?? '') ||
+    'No answer returned.';
   return { answer, sources: ranked };
 };

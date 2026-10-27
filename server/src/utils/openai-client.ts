@@ -1,4 +1,6 @@
 import OpenAI from 'openai';
+export const stripThinking = (text: string): string =>
+  text.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
 export const LLM_MODEL = process.env.LLM_MODEL || 'Qwen/Qwen3-32B';
 let client: OpenAI;
 export const getClient = (): OpenAI => {

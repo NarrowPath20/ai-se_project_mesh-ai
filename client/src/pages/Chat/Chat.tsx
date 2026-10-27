@@ -15,6 +15,7 @@ import errorIcon from '../../assets/chat-error.svg';
 export default function Chat() {
   const { isMobile, sidebarContainer, setIsMenuOpen, closeMenu } = useAppLayout();
   const titleInput = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLLIElement>(null);
   const [chats, setChats] = useState<ChatType[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [chatsError, setChatsError] = useState<string | null>(null);
@@ -33,12 +34,16 @@ export default function Chat() {
   const newChatButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  useEffect(() => {
     let active = true;
     const load = async () => {
       try {
         const res = await getChats();
         if (!res.success) throw new Error(res.error?.message || 'Failed to load chats.');
-        if (active) setChats((current) => [...current, ...(res.data || [])]);
+        if (active) setChats((current) => [...current, ...(res.data || []).filter((chat) => !current.some((existing) => existing._id === chat._id))]);
       } catch {
         if (active) setChatsError('Failed to load chats.');
       } finally {
@@ -103,7 +108,10 @@ export default function Chat() {
       const res = await sendMessage(chatId, text);
       if (!res.success || !res.data) throw new Error('Failed to send message.');
       const reply = res.data;
-      if (selectionVersion.current === version) setMessages((current) => [...current, reply]);
+      if (selectionVersion.current === version) setMessages((current) => [
+        ...current.filter((message) => message._id !== userMessage._id),
+        ...reply,
+      ]);
     } catch {
       const errorMessage: Message = {
         _id: createId(),
@@ -246,6 +254,8 @@ export default function Chat() {
                     </div>
                   </li>
                 ))}
+                {isSending && <li className="chat__message chat__message_assistant chat__message_thinking" role="status">Thinking…</li>}
+                <li className="chat__messages-end" ref={messagesEndRef} aria-hidden="true" />
               </ul>
             )}
             <div className="chat__input-bar">
@@ -269,7 +279,6 @@ export default function Chat() {
                 <img src={sendIcon} width="24" height="24" alt="Send message paper plane" />
               </button>
             </div>
-            {isSending && <p className="chat__sending" role="status">Sending message…</p>}
           </>
         )}
       </section>

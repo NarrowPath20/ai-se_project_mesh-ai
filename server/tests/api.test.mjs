@@ -4,13 +4,15 @@ import { randomUUID } from 'node:crypto';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import { fork } from 'node:child_process';
+import { once } from 'node:events';
 import { app } from '../dist/app.js';
 import User from '../dist/models/user.js';
 import Chat from '../dist/models/chat.js';
 import Document from '../dist/models/document.js';
 import Chunk from '../dist/models/chunk.js';
 import Message from '../dist/models/message.js';
-import { getClient } from '../dist/utils/openai-client.js';
+import { getClient, stripThinking } from '../dist/utils/openai-client.js';
 
 // Each run uses an isolated database, never the application's database.
 await mongoose.connect(
@@ -32,7 +34,16 @@ client.embeddings.create = async ({ input }) => {
 client.chat.completions.create = async ({ messages }) => {
   assert.match(messages[1].content, /MeshAI launch code is ORION/);
   assert.doesNotMatch(messages[1].content, /OTHER_USER_PRIVATE/);
-  return { choices: [{ message: { content: 'The launch code is ORION.' } }] };
+  return {
+    choices: [
+      {
+        message: {
+          content:
+            '<think>Private reasoning\nabout the document.</think>\nThe launch code is ORION.',
+        },
+      },
+    ],
+  };
 };
 const server = app.listen(0, '127.0.0.1');
 await new Promise((resolve) => server.once('listening', resolve));
@@ -90,6 +101,15 @@ const pdf = () => {
     '\n%%EOF\n'
   );
 };
+test('stripThinking removes reasoning blocks and preserves final text', () => {
+  assert.equal(stripThinking('<think>one\ntwo</think>\nAnswer'), 'Answer');
+  assert.equal(
+    stripThinking('<think>one</think><think>two</think> Answer '),
+    'Answer',
+  );
+  assert.equal(stripThinking(' Plain answer '), 'Plain answer');
+  assert.equal(stripThinking('<think>only reasoning</think>'), '');
+});
 test('MongoDB auth, ownership, PDF extraction, retrieval, generation, and persisted messages', async () => {
   assert.equal((await request('GET', '/health')).status, 200);
   assert.equal((await request('GET', '/test-error')).status, 404);
@@ -159,6 +179,22 @@ test('MongoDB auth, ownership, PDF extraction, retrieval, generation, and persis
     'Invalid token',
   );
   assert.deepEqual(currentUser.body, registration.body);
+  const profile = await request('GET', '/users/me', undefined, token);
+  assert.equal(profile.status, 200);
+  assert.deepEqual(profile.body, registration.body);
+  assert.equal((await request('GET', '/users/me')).status, 401);
+  assert.equal(
+    (await request('GET', '/users/me', undefined, 'invalid')).status,
+    401,
+  );
+  const deletedUserToken = jwt.sign(
+    { userId: String(new mongoose.Types.ObjectId()) },
+    process.env.JWT_SECRET,
+  );
+  assert.equal(
+    (await request('GET', '/users/me', undefined, deletedUserToken)).status,
+    404,
+  );
   assert.equal(
     jwt.verify(token, process.env.JWT_SECRET).userId,
     String(storedUser._id),
@@ -260,6 +296,7 @@ test('MongoDB auth, ownership, PDF extraction, retrieval, generation, and persis
   );
   assert.equal(query.status, 200);
   assert.match(query.body.answer, /ORION/);
+  assert.equal(query.body.answer, 'The launch code is ORION.');
   assert.equal(query.body.sources.length, chunks.length);
   const path = '/chats/' + chat.body._id;
   assert.equal(
@@ -279,6 +316,38 @@ test('MongoDB auth, ownership, PDF extraction, retrieval, generation, and persis
   );
   const history = await request('GET', path, undefined, token);
   assert.equal(history.body.messages.length, 2);
+  assert.equal(history.body.messages[1].content, 'The launch code is ORION.');
+  // Verify persistence through a fresh Node/Express process, not an in-memory list.
+  const restarted = fork(new URL('./restart-server.mjs', import.meta.url), [], {
+    env: { ...process.env, TEST_DB_NAME: mongoose.connection.name },
+    stdio: ['ignore', 'ignore', 'inherit', 'ipc'],
+  });
+  try {
+    const [{ port }] = await once(restarted, 'message', {
+      signal: AbortSignal.timeout(10000),
+    });
+    const headers = { Authorization: 'Bearer ' + token };
+    const freshDocuments = await fetch(`http://127.0.0.1:${port}/documents`, {
+      headers,
+    });
+    assert.equal(freshDocuments.status, 200);
+    assert.equal(
+      (await freshDocuments.json()).data[0]._id,
+      uploaded.body.data._id,
+    );
+    const freshChat = await fetch(`http://127.0.0.1:${port}${path}`, {
+      headers,
+    });
+    assert.equal(freshChat.status, 200);
+    assert.deepEqual(
+      (await freshChat.json()).data.messages,
+      history.body.messages,
+    );
+  } finally {
+    const exited = once(restarted, 'exit');
+    restarted.kill();
+    await exited;
+  }
   client.chat.completions.create = async () => {
     throw new Error('Simulated provider failure');
   };

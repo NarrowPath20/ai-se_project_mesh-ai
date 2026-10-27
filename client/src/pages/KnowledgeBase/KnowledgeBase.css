@@ -9,12 +9,9 @@
 .knowledge-base__filename { min-width: 0; overflow-wrap: anywhere; font-size: 14px; line-height: 20px; }
 .knowledge-base__delete { display: grid; place-items: center; flex-shrink: 0; width: 16px; height: 16px; border-radius: 2px; }
 .knowledge-base__document:hover { background: #1c1c1c1a; }
-.knowledge-base__save { min-height: 44px; padding: 10px 16px; border-radius: 8px; background: #1c1c1c; color: #fff; font-size: 18px; font-weight: 500; line-height: 24px; }
-.knowledge-base__save:hover { background: #393939; }
-.knowledge-base__save:focus-visible, .knowledge-base__delete:focus-visible { outline: 2px solid #9679d9; outline-offset: 4px; }
+.knowledge-base__delete:focus-visible { outline: 2px solid #9679d9; outline-offset: 4px; }
 @media (width < 1200px) {
   .knowledge-base { padding: 32px 4px 8px; }
   .knowledge-base__library { margin-top: 32px; }
   .knowledge-base__documents { flex-direction: column; align-items: flex-start; }
-  .knowledge-base__save { width: 100%; min-height: 52px; }
 }
