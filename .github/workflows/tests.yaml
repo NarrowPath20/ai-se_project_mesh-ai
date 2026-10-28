@@ -36,12 +36,20 @@ jobs:
         run: |
           docker run --detach --name meshai-mongodb --publish 127.0.0.1:27017:27017 mongo:8.0
           for attempt in $(seq 1 30); do
+            if [ "$(docker inspect --format '{{.State.Running}}' meshai-mongodb)" != "true" ]; then
+              echo "::error::MongoDB container exited during startup"
+              docker inspect --format '{{json .State}}' meshai-mongodb
+              docker logs meshai-mongodb
+              exit 1
+            fi
             if docker exec meshai-mongodb mongosh --quiet --eval 'quit(db.runCommand({ ping: 1 }).ok === 1 ? 0 : 1)'; then
               exit 0
             fi
             sleep 2
           done
           echo "MongoDB did not become ready within 60 seconds"
+          docker inspect --format '{{json .State}}' meshai-mongodb
+          docker logs meshai-mongodb
           exit 1
       - uses: actions/setup-node@v4
         with:
@@ -65,6 +73,7 @@ jobs:
         if: failure()
         run: |
           docker ps --all
+          docker inspect --format '{{json .State}}' meshai-mongodb
           docker logs meshai-mongodb
       - name: Stop MongoDB
         if: always()
