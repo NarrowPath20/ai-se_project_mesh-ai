@@ -26,23 +26,23 @@ jobs:
       - run: npm run lint
       - run: npm run build
   test:
-    # Keep MongoDB service startup stable during ubuntu-latest image migrations.
     runs-on: ubuntu-24.04
-    services:
-      mongodb:
-        image: mongo:8
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     env:
       MONGO_URI: mongodb://127.0.0.1:27017/meshai_ci
       JWT_SECRET: ci-only-secret-not-for-production
     steps:
       - uses: actions/checkout@v4
+      - name: Start MongoDB
+        run: |
+          docker run --detach --name meshai-mongodb --publish 127.0.0.1:27017:27017 mongo:8.0
+          for attempt in $(seq 1 30); do
+            if docker exec meshai-mongodb mongosh --quiet --eval 'quit(db.runCommand({ ping: 1 }).ok === 1 ? 0 : 1)'; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "MongoDB did not become ready within 60 seconds"
+          exit 1
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -61,3 +61,11 @@ jobs:
             sleep 1
           done
           npx --yes newman run postman/mesh-ai.postman_collection.json --folder Core
+      - name: MongoDB diagnostics
+        if: failure()
+        run: |
+          docker ps --all
+          docker logs meshai-mongodb
+      - name: Stop MongoDB
+        if: always()
+        run: docker rm --force meshai-mongodb
