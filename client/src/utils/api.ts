@@ -32,7 +32,10 @@ export type ApiResponse<T> = {
   error: { message: string } | null;
 };
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+async function request<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<ApiResponse<T>> {
   const token = localStorage.getItem('auth-token') ?? '';
   const headers = new Headers({
     'Content-Type': 'application/json',
@@ -63,14 +66,19 @@ export function getCurrentUser() {
 
 export function registerUser(name: string, email: string, password: string) {
   return request<CurrentUser>(`${BASE_URL}/auth/register`, {
-    method: 'POST', body: JSON.stringify({ name, email, password }),
+    method: 'POST',
+    body: JSON.stringify({ name, email, password }),
   });
 }
 
 export function loginUser(email: string, password: string) {
-  return request<{ token: string; user: CurrentUser }>(`${BASE_URL}/auth/login`, {
-    method: 'POST', body: JSON.stringify({ email, password }),
-  });
+  return request<{ token: string; user: CurrentUser }>(
+    `${BASE_URL}/auth/login`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    },
+  );
 }
 
 export const getChats = async (): Promise<ApiResponse<Chat[]>> => {
@@ -79,29 +87,56 @@ export const getChats = async (): Promise<ApiResponse<Chat[]>> => {
 
 export const createChat = async (title: string): Promise<ApiResponse<Chat>> => {
   return request<Chat>(`${BASE_URL}/chats`, {
-    method: 'POST', body: JSON.stringify({ title }),
+    method: 'POST',
+    body: JSON.stringify({ title }),
   });
 };
 
-export const getChat = async (chatId: string): Promise<ApiResponse<ChatDetails>> => {
-  return request<ChatDetails>(`${BASE_URL}/chats/${encodeURIComponent(chatId)}`);
+export const getChat = async (
+  chatId: string,
+): Promise<ApiResponse<ChatDetails>> => {
+  return request<ChatDetails>(
+    `${BASE_URL}/chats/${encodeURIComponent(chatId)}`,
+  );
 };
 
-export const sendMessage = async (chatId: string, question: string): Promise<ApiResponse<Message[]>> => {
-  return request<Message[]>(`${BASE_URL}/chats/${encodeURIComponent(chatId)}/messages`, {
-    method: 'POST', body: JSON.stringify({ question }),
-  });
+export const sendMessage = async (
+  chatId: string,
+  question: string,
+): Promise<ApiResponse<Message[]>> => {
+  return request<Message[]>(
+    `${BASE_URL}/chats/${encodeURIComponent(chatId)}/messages`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ question }),
+    },
+  );
 };
 export const getDocuments = (): Promise<ApiResponse<KnowledgeDoc[]>> => {
   return request<KnowledgeDoc[]>(`${BASE_URL}/documents`);
 };
 
-export const uploadDocument = async (file: File): Promise<ApiResponse<KnowledgeDoc>> => {
+export const deleteDocument = (
+  documentId: string,
+): Promise<ApiResponse<null>> => {
+  return request<null>(
+    `${BASE_URL}/documents/${encodeURIComponent(documentId)}`,
+    {
+      method: 'DELETE',
+    },
+  );
+};
+
+export const uploadDocument = async (
+  file: File,
+): Promise<ApiResponse<KnowledgeDoc>> => {
   const formData = new FormData();
   formData.append('file', file);
   const res = await fetch(`${BASE_URL}/documents`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${localStorage.getItem('auth-token') ?? ''}` },
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('auth-token') ?? ''}`,
+    },
     body: formData,
   });
   if (res.status === 401) {

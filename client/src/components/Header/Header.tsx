@@ -19,10 +19,12 @@ export default function Header({ isMenuOpen, onMenuToggle }: Props) {
     if (!isAccountMenuOpen) return;
     logoutButton.current?.focus();
     const closeOnOutsideClick = (event: PointerEvent) => {
-      if (!account.current?.contains(event.target as Node)) setIsAccountMenuOpen(false);
+      if (!account.current?.contains(event.target as Node))
+        setIsAccountMenuOpen(false);
     };
     document.addEventListener('pointerdown', closeOnOutsideClick);
-    return () => document.removeEventListener('pointerdown', closeOnOutsideClick);
+    return () =>
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
   }, [isAccountMenuOpen]);
 
   function handleLogout() {
@@ -39,35 +41,79 @@ export default function Header({ isMenuOpen, onMenuToggle }: Props) {
       <Link className="header__logo" to="/" aria-label="MeshAI home">
         <img src={logo} alt="Mesh AI logo" width="99" height="26" />
       </Link>
-      {isAuthenticated && <>
-      <nav className="header__nav" aria-label="Main navigation">
-        <NavLink to="/knowledge" className={getNavLinkClass}>Knowledge Base</NavLink>
-        <NavLink to="/chat" className={getNavLinkClass}>Chat</NavLink>
-      </nav>
-      <button className="header__hamburger" type="button" aria-label="Open menu" aria-expanded={isMenuOpen} aria-controls="mobile-menu" onClick={onMenuToggle}>
-        <img src={menuIcon} width="24" height="24" alt="Navigation menu" />
-      </button>
-      <div className="header__account" ref={account} onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) setIsAccountMenuOpen(false);
-      }} onKeyDown={(event) => {
-        if (event.key === 'Escape') {
-          setIsAccountMenuOpen(false);
-          accountButton.current?.focus();
-        }
-      }}>
-        <button type="button" className="header__dropdown-btn" ref={accountButton}
-          aria-haspopup="menu" aria-expanded={isAccountMenuOpen} aria-controls="account-menu"
-          onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
-          onKeyDown={(event) => {
-            if (event.key === 'ArrowDown') { event.preventDefault(); setIsAccountMenuOpen(true); }
-          }}>
-          {currentUser?.name}'s Account
-        </button>
-        {isAccountMenuOpen && <ul className="header__menu" id="account-menu" role="menu" aria-label="Account">
-          <li role="none"><button type="button" role="menuitem" ref={logoutButton} onClick={handleLogout}>Logout</button></li>
-        </ul>}
-      </div>
-      </>}
+      {isAuthenticated && (
+        <>
+          <nav className="header__nav" aria-label="Main navigation">
+            <NavLink to="/knowledge" className={getNavLinkClass}>
+              Knowledge Base
+            </NavLink>
+            <NavLink to="/chat" className={getNavLinkClass}>
+              Chat
+            </NavLink>
+          </nav>
+          <button
+            className="header__hamburger"
+            type="button"
+            aria-label="Open menu"
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-menu"
+            onClick={onMenuToggle}
+          >
+            <img src={menuIcon} width="24" height="24" alt="Navigation menu" />
+          </button>
+          <div
+            className="header__account"
+            ref={account}
+            onBlur={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget))
+                setIsAccountMenuOpen(false);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                setIsAccountMenuOpen(false);
+                accountButton.current?.focus();
+              }
+            }}
+          >
+            <button
+              type="button"
+              className="header__dropdown-btn"
+              ref={accountButton}
+              aria-haspopup="menu"
+              aria-expanded={isAccountMenuOpen}
+              aria-controls="account-menu"
+              onClick={() => setIsAccountMenuOpen(!isAccountMenuOpen)}
+              onKeyDown={(event) => {
+                if (event.key === 'ArrowDown') {
+                  event.preventDefault();
+                  setIsAccountMenuOpen(true);
+                }
+              }}
+            >
+              {currentUser?.name}'s Account
+            </button>
+            {isAccountMenuOpen && (
+              <ul
+                className="header__menu"
+                id="account-menu"
+                role="menu"
+                aria-label="Account"
+              >
+                <li role="none">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    ref={logoutButton}
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </button>
+                </li>
+              </ul>
+            )}
+          </div>
+        </>
+      )}
     </header>
   );
 }
