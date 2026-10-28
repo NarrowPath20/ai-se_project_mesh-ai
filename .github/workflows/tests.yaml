@@ -26,7 +26,8 @@ jobs:
       - run: npm run lint
       - run: npm run build
   test:
-    runs-on: ubuntu-latest
+    # Keep MongoDB service startup stable during ubuntu-latest image migrations.
+    runs-on: ubuntu-24.04
     services:
       mongodb:
         image: mongo:8
