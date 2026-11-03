@@ -370,3 +370,94 @@ test('MongoDB auth, ownership, PDF extraction, retrieval, generation, and persis
     'Invalid JSON request body',
   );
 });
+
+test('chat list cache reuses reads, isolates users, and invalidates writes', async () => {
+  const userId = new mongoose.Types.ObjectId();
+  const otherId = new mongoose.Types.ObjectId();
+  const token = jwt.sign({ userId: String(userId) }, process.env.JWT_SECRET);
+  const otherToken = jwt.sign(
+    { userId: String(otherId) },
+    process.env.JWT_SECRET,
+  );
+  const originalFind = Chat.find;
+  let reads = 0;
+  Chat.find = function (...args) {
+    reads++;
+    return originalFind.apply(this, args);
+  };
+  try {
+    assert.deepEqual(
+      (await request('GET', '/chats', undefined, token)).body,
+      [],
+    );
+    assert.deepEqual(
+      (await request('GET', '/chats', undefined, token)).body,
+      [],
+    );
+    assert.equal(reads, 1);
+    const created = await request(
+      'POST',
+      '/chats',
+      { title: 'Cached chat' },
+      token,
+    );
+    assert.equal(created.status, 201);
+    assert.equal(
+      (await request('GET', '/chats', undefined, token)).body.length,
+      1,
+    );
+    assert.equal(reads, 2);
+    assert.deepEqual(
+      (await request('GET', '/chats', undefined, otherToken)).body,
+      [],
+    );
+    assert.equal(reads, 3);
+    const path = '/chats/' + created.body._id;
+    assert.equal(
+      (await request('PATCH', path, { title: 'Renamed' }, token)).status,
+      200,
+    );
+    assert.equal(
+      (await request('GET', '/chats', undefined, token)).body[0].title,
+      'Renamed',
+    );
+    assert.equal(reads, 4);
+    assert.equal((await request('DELETE', path, undefined, token)).status, 200);
+    assert.deepEqual(
+      (await request('GET', '/chats', undefined, token)).body,
+      [],
+    );
+    assert.equal(reads, 5);
+  } finally {
+    Chat.find = originalFind;
+  }
+});
+
+test('authentication limits use the forwarded client IP and separate route buckets', async () => {
+  assert.equal(app.get('trust proxy'), 1);
+  const attempt = async (route, ip) =>
+    fetch(base + route, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': ip },
+      body: '{}',
+    });
+  for (const route of ['/auth/login', '/auth/register']) {
+    for (let i = 0; i < 20; i++)
+      assert.equal((await attempt(route, '192.0.2.10')).status, 400);
+    const blocked = await attempt(route, '192.0.2.10');
+    assert.equal(blocked.status, 429);
+    assert.equal((await blocked.json()).success, false);
+    assert.equal((await attempt(route, '192.0.2.11')).status, 400);
+  }
+});
+
+test('cache expires entries and supports explicit invalidation', async () => {
+  const { getCacheValue, setCacheValue, deleteCacheValue } =
+    await import('../dist/utils/cache.js');
+  setCacheValue('unit:expired', 'old', -1);
+  assert.equal(getCacheValue('unit:expired'), undefined);
+  setCacheValue('unit:delete', 'value');
+  assert.equal(getCacheValue('unit:delete'), 'value');
+  deleteCacheValue('unit:delete');
+  assert.equal(getCacheValue('unit:delete'), undefined);
+});

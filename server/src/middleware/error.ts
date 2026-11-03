@@ -2,6 +2,7 @@ import type { ErrorRequestHandler, RequestHandler } from 'express';
 import mongoose from 'mongoose';
 import multer from 'multer';
 import { HttpError } from '../utils/http-error.js';
+import { logger } from '../utils/logger.js';
 export const notFoundHandler: RequestHandler = (req, res): void => {
   res.status(404).json({
     success: false,
@@ -52,6 +53,7 @@ export const errorHandler: ErrorRequestHandler = (
     status = 409;
     message = 'Email already in use';
   }
-  if (status === 500) console.error(error);
+  if (status === 500)
+    logger.error(error instanceof Error ? error : new Error(String(error)));
   res.status(status).json({ success: false, data: null, error: { message } });
 };
