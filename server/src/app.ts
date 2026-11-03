@@ -4,6 +4,7 @@ import { logger } from './middleware/logger.js';
 import { notFoundHandler, errorHandler } from './middleware/error.js';
 
 export const app = express();
+app.set('trust proxy', 1);
 
 app.use(logger);
 app.use(express.json());
