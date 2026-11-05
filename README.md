@@ -2,7 +2,7 @@
 
 MeshAI is a full-stack AI assistant that lets users upload PDF documents to a personal knowledge base and ask questions through chat. It uses retrieval-augmented generation (RAG), MongoDB, and Nebius AI through the OpenAI SDK to produce answers grounded in uploaded documents.
 
-**Live:** Deployment URL pending. Add the production HTTPS link here once the subdomain is configured and verified.
+**EC2 address:** <http://54.234.20.30> (HTTP; no domain configured). This auto-assigned IP can change after the instance is stopped and started.
 
 ## Tech stack
 
@@ -63,9 +63,9 @@ Keep real values in ignored `.env` files. Use a different JWT secret for product
 | `MONGO_URI` | Required MongoDB connection string for the backend. Compose supplies its internal MongoDB address and database; the root value does not override it. |
 | `JWT_SECRET` | Required secret used to sign and verify authentication tokens. |
 | `NEBIUS_API_KEY` | Nebius API key required for embeddings and AI chat responses. |
-| `SITE_ADDRESS` | Hostname used by Caddy, without a protocol. Use localhost locally and your subdomain in production. Defaults to localhost in Compose. |
+| `SITE_ADDRESS` | Caddy site address. Use `localhost` locally, your subdomain for automatic HTTPS, or `http://54.234.20.30` for HTTP access by IP. Defaults to localhost in Compose. |
 | `PORT` | Optional backend listening port; defaults to 3000. Keep this default in Docker to match the proxy configuration. |
-| `LLM_MODEL` | Optional Nebius chat model override; defaults to Qwen/Qwen3-32B. Supported by the backend environment; Compose does not forward this variable by default. |
+| `LLM_MODEL` | Nebius chat model override. Docker Compose defaults to `Qwen/Qwen3-30B-A3B-Instruct-2507`, verified in the live model catalog. The backend's legacy fallback outside Docker is `Qwen/Qwen3-32B`; set this variable when running locally because that model is no longer available. |
 | `NODE_ENV` | Runtime mode; Compose sets it to production. |
 | `TEST_MONGO_URI` | Optional MongoDB connection string for backend integration tests. Tests use an isolated temporary database and otherwise connect to local MongoDB. |
 
@@ -84,3 +84,40 @@ Backend integration tests require a running MongoDB instance and mock the AI pro
 ## Deployment
 
 On the EC2 host, configure the root `.env` with production secrets and your subdomain as `SITE_ADDRESS`, point the domain's DNS to the host, and allow inbound HTTP and HTTPS. Run `docker compose up --build -d`; Caddy obtains and renews the public HTTPS certificate. API requests pass through Caddy, which strips `/api` before forwarding them to Express.
+
+### Current EC2 installation
+
+- Instance: `i-07d10c9b039ee5093`, Ubuntu 26.04, user `ubuntu`.
+- Application directory: `/opt/meshai`.
+- Root environment: `/opt/meshai/.env`, readable only by its owner. The server uses a separate production JWT secret.
+- `SITE_ADDRESS=http://54.234.20.30` explicitly selects HTTP. Passwords, tokens, and document traffic are not encrypted in transit; configure HTTPS before using sensitive data.
+- Docker starts at boot; all four services use `restart: unless-stopped`. MongoDB and uploads use persistent Docker volumes.
+- The host has 2 GB of swap and bounded container logs. MongoDB and the backend are not published as host ports.
+
+Connect using your local PuTTY key (the private key must never be committed):
+
+```powershell
+& "C:\Program Files\PuTTY\plink.exe" -ssh -i "C:\Users\bossm\Downloads\my-server-key.ppk" ubuntu@54.234.20.30
+```
+
+On the server:
+
+```sh
+cd /opt/meshai
+sudo docker compose ps
+sudo docker compose logs --tail=100 backend caddy
+curl --fail http://54.234.20.30/api/health
+```
+
+To deploy updated source, upload the changed project files to `/opt/meshai`, preserving its `.env`. Build services sequentially to reduce memory pressure:
+
+```sh
+cd /opt/meshai
+sudo docker compose build backend
+sudo docker compose build frontend
+sudo docker compose up -d
+```
+
+The initial deployment was uploaded from the local workspace; `/opt/meshai` is not a Git checkout, and GitHub pushes do not automatically deploy. Do not run `docker compose down -v`: it deletes application data. Persistent volumes survive container replacement but are not backups.
+
+Deployment verification: public `/api/health` and `/chat`, registration, login, authenticated profile access, PDF upload and embeddings, document-grounded AI responses, and persisted chat history passed against the live EC2 deployment. The running backend key was verified to match the local key without displaying it. Chat uses `Qwen/Qwen3-30B-A3B-Instruct-2507` because Nebius no longer offers `Qwen/Qwen3-32B`. Temporary verification data was removed. After changing server environment variables, run `sudo docker compose up -d --force-recreate backend`. Do not paste API keys into chat or commit them.

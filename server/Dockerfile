@@ -1,4 +1,4 @@
-FROM node:20-alpine AS backend
+FROM node:24-alpine AS backend
 
 WORKDIR /app
 COPY package*.json ./
@@ -7,7 +7,7 @@ RUN npm ci
 COPY ./ ./
 RUN npm run build
 
-FROM node:20-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 COPY package*.json ./

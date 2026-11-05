@@ -1,6 +1,7 @@
 services:
   mongo:
     image: mongo:7
+    restart: unless-stopped
     volumes:
       - mongo_data:/data/db
     healthcheck:
@@ -11,11 +12,13 @@ services:
 
   backend:
     build: ./server
+    restart: unless-stopped
     image: meshai-backend
     environment:
       MONGO_URI: mongodb://mongo:27017/meshai
       JWT_SECRET: ${JWT_SECRET}
       NEBIUS_API_KEY: ${NEBIUS_API_KEY}
+      LLM_MODEL: ${LLM_MODEL:-Qwen/Qwen3-30B-A3B-Instruct-2507}
       NODE_ENV: production
     volumes:
       - uploads_data:/app/uploads
@@ -25,10 +28,12 @@ services:
 
   frontend:
     build: ./client
+    restart: unless-stopped
     image: meshai-frontend
 
   caddy:
     image: caddy:2-alpine
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
